@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SMZ3.SMLogic;
+using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
 
@@ -9,6 +10,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
         public override string Area => "Crateria";
 
         public West(World world, Config config) : base(world, config) {
+            RegionItems = new[] { CardCrateriaL2 };
             Locations = new List<Location> {
                 new Location(this, 8, 0x8F8432, LocationType.Visible, "Energy Tank, Terminator"),
                 new Location(this, 5, 0x8F8264, LocationType.Visible, "Energy Tank, Gauntlet", Logic switch {
@@ -27,16 +29,17 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
         }
 
         public override bool CanEnter(Progression items) {
-            return items.CanDestroyBombWalls() || items.SpeedBooster;
+            return Logic switch {
+                Normal => items.CanDestroyBombWalls(),
+                _ =>items.CanDestroyBombWalls() || items.SpeedBooster,
+            };
         }
 
         private bool CanEnterAndLeaveGauntlet(Progression items) {
             return Logic switch {
                 Normal =>
-                    items.CardCrateriaL1 && items.Morph && (items.CanFly() || items.SpeedBooster) && (
-                        items.CanIbj() ||
-                        items.CanUsePowerBombs() && items.TwoPowerBombs ||
-                        items.ScrewAttack),
+                    items.CardCrateriaL1 && items.Morph && (items.CanFly() || items.SpeedBooster) &&
+                        (items.CanIbj() || items.CanUsePowerBombs() && items.TwoPowerBombs || items.ScrewAttack),
                 _ =>
                     items.CardCrateriaL1 && (
                         (items.Morph && (items.Bombs || items.TwoPowerBombs)) ||

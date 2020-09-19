@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.ItemType;
 using static Randomizer.SMZ3.RewardType;
 
@@ -122,14 +123,14 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         }
 
         private bool BigKeyRoom(Progression items) {
-            return items.KeyGT >= 3 && CanBeatArmos(items) 
+            return items.KeyGT >= 3 && CanBeatArmos(items)
                 && (items.Hammer && items.Hookshot || items.Firerod && items.Somaria);
         }
 
         private bool TowerAscend(Progression items) {
             return items.BigKeyGT && items.KeyGT >= 3 && items.Bow && items.CanLightTorches();
-        }   
-            
+        }
+
         private bool CanBeatArmos(Progression items) {
             return items.Sword || items.Hammer || items.Bow ||
                 items.CanExtendMagic(2) && (items.Somaria || items.Byrna) ||
@@ -141,8 +142,13 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         }
 
         public override bool CanEnter(Progression items) {
-            return items.MoonPearl && World.CanEnter("Dark World Death Mountain East", items) &&
-                World.CanAquireAll(items, new[] { CrystalBlue, CrystalRed, GoldenFourBoss });
+            if (Config.GameMode == GameMode.Multiworld) {
+                return items.MoonPearl && World.CanEnter("Dark World Death Mountain East", items) &&
+                    World.CanAquireAll(items, new[] { CrystalBlue, CrystalRed, GoldenFourBoss });
+            } else {
+                return items.MoonPearl && World.CanEnter("Dark World Death Mountain East", items) &&
+                    World.CanAquireAll(items, new[] { CrystalBlue, CrystalRed });
+            }
         }
 
         public override bool CanFill(Item item, Progression items) {
@@ -158,7 +164,5 @@ namespace Randomizer.SMZ3.Regions.Zelda {
 
             return base.CanFill(item, items);
         }
-
     }
-
 }

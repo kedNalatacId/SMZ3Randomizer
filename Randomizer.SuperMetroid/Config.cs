@@ -8,15 +8,15 @@ using System.Reflection;
 namespace Randomizer.SuperMetroid {
 
     [DefaultValue(Tournament)]
-    enum Logic {
+    public enum Logic {
         [Description("Casual")]
         Casual,
         [Description("Tournament")]
         Tournament
     }
-    
+
     [DefaultValue(Split)]
-    enum Placement {
+    public enum Placement {
         [Description("Full randomization")]
         Full,
         [Description("Major/Minor split")]
@@ -24,7 +24,7 @@ namespace Randomizer.SuperMetroid {
     }
 
     [DefaultValue(Normal)]
-    enum GameMode {
+    public enum GameMode {
         [Description("Single player")]
         Normal,
         [Description("Multiworld")]
@@ -32,12 +32,12 @@ namespace Randomizer.SuperMetroid {
     }
 
     [DefaultValue(DefeatMB)]
-    enum Goal {
+    public enum Goal {
         [Description("Defeat Mother Brain")]
         DefeatMB,
     }
 
-    class Config {
+    public class Config {
         public GameMode GameMode { get; set; } = GameMode.Normal;
         public Logic Logic { get; set; } = Logic.Tournament;
         public Goal Goal { get; set; } = Goal.DefeatMB;

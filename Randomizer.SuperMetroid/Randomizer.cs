@@ -8,11 +8,12 @@ using static Randomizer.Shared.Contracts.RandomizerOptionType;
 namespace Randomizer.SuperMetroid {
 
     public class Randomizer : IRandomizer {
-        
+
         public static readonly Version version = new Version(3, 0);
 
         public string Id => "sm";
         public string Name => "Super Metroid Item Randomizer";
+        public Config Config { get; set; }
 
         public string Version => version.ToString();
 
@@ -117,6 +118,15 @@ namespace Randomizer.SuperMetroid {
                 Id = (int)i,
                 Name = i.GetDescription()
             }).Cast<IItemTypeData>().ToDictionary(itemTypeData => itemTypeData.Id);
+
+        public Dictionary<string, string> ExportConfig() => new Dictionary<string, string>() {
+            {"GameMode", Config.GameMode.ToString()},
+            {"SMLogic", Config.Logic.ToString()},
+            {"Goal", Config.Goal.ToString()},
+            {"Placement", Config.Placement.ToString()},
+            {"Race", Config.Race.ToString()},
+            {"Keycards", Config.Keysanity.ToString()},
+        };
     }
 
     public class RandomizerOption : IRandomizerOption {
@@ -135,10 +145,10 @@ namespace Randomizer.SuperMetroid {
         public string Mode { get; set; }
         public List<IWorldData> Worlds { get; set; }
         public List<Dictionary<string, string>> Playthrough { get; set; }
+        public string Spoiler { get; set; }
     }
 
     public class WorldData : IWorldData {
-
         public int Id { get; set; }
         public string Guid { get; set; }
         public string Player { get; set; }
@@ -159,13 +169,9 @@ namespace Randomizer.SuperMetroid {
 
     public class LocationTypeData : ILocationTypeData {
         public int Id { get; set; }
-
         public string Name { get; set; }
-
         public string Type { get; set; }
-
         public string Region { get; set; }
-
         public string Area { get; set; }
     }
 }

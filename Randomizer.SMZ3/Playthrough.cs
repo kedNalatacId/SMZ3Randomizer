@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Randomizer.SMZ3 {
 
@@ -20,7 +21,7 @@ namespace Randomizer.SMZ3 {
             var items = new List<Item>();
             
             foreach (var world in worlds) {
-                if (!world.Config.Keysanity) {
+                if (!world.Config.UseKeycards) {
                     items.AddRange(Item.CreateKeycards(world));
                 }
             }
@@ -55,7 +56,7 @@ namespace Randomizer.SMZ3 {
                 }
 
                 foreach (var location in newLocations) {
-                    if ((config.Keysanity && !location.Item.Progression && !location.Item.IsDungeonItem && !location.Item.IsKeycard) || (!config.Keysanity && !location.Item.Progression))
+                    if ((config.UseKeycards && !location.Item.Progression && !location.Item.IsDungeonItem && !location.Item.IsKeycard) || (!config.UseKeycards && !location.Item.Progression))
                         continue;
 
                     if (config.GameMode == GameMode.Multiworld) {
@@ -65,6 +66,7 @@ namespace Randomizer.SMZ3 {
                         sphere.Add($"{location.Name}", $"{location.Item.Name}");
                     }
                 }
+
                 spheres.Add(sphere);
 
                 if (spheres.Count > 100)

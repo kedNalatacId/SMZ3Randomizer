@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 
 namespace Randomizer.SMZ3.Regions.Zelda.LightWorld.DeathMountain {
 
@@ -15,12 +16,20 @@ namespace Randomizer.SMZ3.Regions.Zelda.LightWorld.DeathMountain {
                     items => items.Mirror),
                 new Location(this, 256+2, 0x308002, LocationType.Regular, "Spectacle Rock Cave"),
                 new Location(this, 256+3, 0x1EE9FA, LocationType.Regular, "Old Man",
-                    items => items.Lamp),
+                    Logic switch {
+                        Normal => items => items.Lamp,
+                        Medium => items => items.Lamp || items.Sword,
+                        _      => new Requirement(items => true),
+                    }),
             };
         }
 
         public override bool CanEnter(Progression items) {
-            return items.Flute || items.CanLiftLight() && items.Lamp || items.CanAccessDeathMountainPortal();
+            return Logic switch {
+                Normal => items.Flute || items.CanLiftLight() && items.Lamp || items.CanAccessDeathMountainPortal(),
+                Medium => items.Flute || (items.CanLiftLight() && (items.Lamp || items.Sword)) || items.CanAccessDeathMountainPortal(),
+                _ => items.Flute || items.CanLiftLight() || items.CanAccessDeathMountainPortal(),
+            };
         }
 
     }

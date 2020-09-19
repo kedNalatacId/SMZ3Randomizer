@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SMZ3.SMLogic;
+using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
 
@@ -11,8 +12,11 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
         public Pink(World world, Config config) : base(world, config) {
             Weight = -4;
 
+            RegionItems = new[] { CardBrinstarBoss, CardCrateriaBoss };
+
             Locations = new List<Location> {
                 new Location(this, 14, 0x8F84E4, LocationType.Chozo, "Super Missile (pink Brinstar)", Logic switch {
+                    Normal => items => items.CardBrinstarBoss && items.CanPassBombPassages() && items.Super,
                     _ => new Requirement(items => (items.CardBrinstarBoss || items.CardBrinstarL2) && items.CanPassBombPassages() && items.Super)
                 }),
                 new Location(this, 21, 0x8F8608, LocationType.Visible, "Missile (pink Brinstar top)"),
@@ -22,18 +26,21 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                 }),
                 new Location(this, 24, 0x8F865C, LocationType.Visible, "Power Bomb (pink Brinstar)", Logic switch {
                     Normal => items => items.CanUsePowerBombs() && items.Super && items.HasEnergyReserves(1),
+                    Medium => items => items.CanUsePowerBombs() && items.Super && items.HasEnergyReserves(1),
                     _ => new Requirement(items => items.CanUsePowerBombs() && items.Super)
                 }),
                 new Location(this, 25, 0x8F8676, LocationType.Visible, "Missile (green Brinstar pipe)", Logic switch {
-                    _ => new Requirement(items => items.Morph &&
-                        (items.PowerBomb || items.Super || items.CanAccessNorfairUpperPortal()))
+                    Hard => new Requirement(items => items.Morph && (items.PowerBomb || items.Super || items.CanAccessNorfairUpperPortal())),
+                    _ => new Requirement(items => items.Morph && (items.PowerBomb || items.Super || (items.CanAccessNorfairUpperPortal() && items.Wave)))
                 }),
                 new Location(this, 33, 0x8F87FA, LocationType.Visible, "Energy Tank, Waterway", Logic switch {
-                    _ => new Requirement(items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && items.SpeedBooster &&
-                        (items.HasEnergyReserves(1) || items.Gravity))
+                    Hard => items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && items.SpeedBooster &&
+                        (items.HasEnergyReserves(1) || items.Gravity),
+                    _ => new Requirement(items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && items.SpeedBooster && items.Gravity),
                 }),
                 new Location(this, 35, 0x8F8824, LocationType.Visible, "Energy Tank, Brinstar Gate", Logic switch {
                     Normal => items => items.CardBrinstarL2 && items.CanUsePowerBombs() && items.Wave && items.HasEnergyReserves(1),
+                    Medium => items => items.CardBrinstarL2 && items.CanUsePowerBombs() && (items.Wave || items.Super) && items.HasEnergyReserves(1),
                     _ => new Requirement(items => items.CardBrinstarL2 && items.CanUsePowerBombs() && (items.Wave || items.Super))
                 }),
             };
@@ -46,6 +53,11 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                     items.CanUsePowerBombs() ||
                     items.CanAccessNorfairUpperPortal() && items.Morph && items.Wave &&
                         (items.Ice || items.HiJump || items.SpaceJump)),
+                Medium =>
+                    (items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
+                    items.CanUsePowerBombs() ||
+                    items.CanAccessNorfairUpperPortal() && items.Morph && items.Wave &&
+                        (items.Ice || items.HiJump || items.CanFly())),
                 _ =>
                     (items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
                     items.CanUsePowerBombs() ||

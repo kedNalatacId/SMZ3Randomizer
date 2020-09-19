@@ -6,6 +6,7 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.RewardType;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace Randomizer.SMZ3 {
 
@@ -124,6 +125,10 @@ namespace Randomizer.SMZ3 {
         ProgressiveShield = 0x5F,
         [Description("Progressive Sword")]
         ProgressiveSword = 0x5E,
+        [Description("Progressive Glove")]
+        ProgressiveGlove = 0x61,
+        [Description("Progressive Bow")]
+        ProgressiveBow = 0x64,
         [Description("Bow")]
         Bow = 0x0B,
         [Description("Silver Arrows")]
@@ -172,8 +177,6 @@ namespace Randomizer.SMZ3 {
         Mirror = 0x1A,
         [Description("Pegasus Boots")]
         Boots = 0x4B,
-        [Description("Progressive Glove")]
-        ProgressiveGlove = 0x61,
         [Description("Zora's Flippers")]
         Flippers = 0x1E,
         [Description("Moon Pearl")]
@@ -317,21 +320,30 @@ namespace Randomizer.SMZ3 {
         public string Name { get; set; }
         public ItemType Type { get; set; }
         public bool Progression { get; set; }
+        [JsonIgnore]
         public World World { get; set; }
 
-        static readonly Regex dungeon = new Regex("^(BigKey|Key|Map|Compass)");
-        static readonly Regex bigKey = new Regex("^BigKey");
-        static readonly Regex key = new Regex("^Key");
-        static readonly Regex map = new Regex("^Map");
-        static readonly Regex compass = new Regex("^Compass");
-        static readonly Regex keycard = new Regex("^Card");
+        static readonly Regex dungeon  = new Regex("^(BigKey|Key|Map|Compass)");
+        static readonly Regex bigKey   = new Regex("^BigKey");
+        static readonly Regex key      = new Regex("^Key");
+        static readonly Regex map      = new Regex("^Map");
+        static readonly Regex compass  = new Regex("^Compass");
+        static readonly Regex bottle   = new Regex("^Bottle");
+        static readonly Regex keycard  = new Regex("^Card");
+        static readonly Regex cardone  = new Regex("^Card.*L1");
+        static readonly Regex cardtwo  = new Regex("^Card.*L2");
+        static readonly Regex bosscard = new Regex("^Card.*Boss$");
 
         public bool IsDungeonItem => dungeon.IsMatch(Type.ToString());
-        public bool IsBigKey => bigKey.IsMatch(Type.ToString());
-        public bool IsKey => key.IsMatch(Type.ToString());
-        public bool IsMap => map.IsMatch(Type.ToString());
-        public bool IsCompass => compass.IsMatch(Type.ToString());
-        public bool IsKeycard => keycard.IsMatch(Type.ToString());
+        public bool IsBigKey      => bigKey.IsMatch(Type.ToString());
+        public bool IsKey         => key.IsMatch(Type.ToString());
+        public bool IsMap         => map.IsMatch(Type.ToString());
+        public bool IsCompass     => compass.IsMatch(Type.ToString());
+        public bool IsBottle      => bottle.IsMatch(Type.ToString());
+        public bool IsKeycard     => keycard.IsMatch(Type.ToString());
+        public bool IsCardOne     => cardone.IsMatch(Type.ToString());
+        public bool IsCardTwo     => cardtwo.IsMatch(Type.ToString());
+        public bool IsBossKeycard => bosscard.IsMatch(Type.ToString());
 
         public bool Is(ItemType type, World world) => Type == type && World == world;
         public bool IsNot(ItemType type, World world) => !Is(type, world);
@@ -349,14 +361,24 @@ namespace Randomizer.SMZ3 {
             return new Item(ItemType.Nothing, world);
         }
 
-        public static List<Item> CreateProgressionPool(World world) {
+        public static List<ItemType> Bottles() {
+            return new List<ItemType> {
+                Bottle,
+                BottleWithRedPotion,
+                BottleWithGreenPotion,
+                BottleWithBluePotion,
+                BottleWithFairy,
+                BottleWithBee,
+                BottleWithGoldBee
+            };
+        }
+
+        public static List<Item> CreateProgressionPool(World world, Config cnf, Random Rnd) {
+            var bottles = Bottles();
             var itemPool = new List<Item> {
-                new Item(ProgressiveShield),
-                new Item(ProgressiveShield),
-                new Item(ProgressiveShield),
                 new Item(ProgressiveSword),
                 new Item(ProgressiveSword),
-                new Item(Bow),
+                new Item(cnf.ProgressiveBow ? ProgressiveBow : Bow),
                 new Item(Hookshot),
                 new Item(Mushroom),
                 new Item(Powder),
@@ -369,9 +391,8 @@ namespace Randomizer.SMZ3 {
                 new Item(Hammer),
                 new Item(Shovel),
                 new Item(Flute),
-                new Item(Bugnet),
                 new Item(Book),
-                new Item(Bottle),
+                new Item(cnf.BottleContents == BottleContents.Empty ? Bottle : bottles[Rnd.Next(bottles.Count)]),
                 new Item(Somaria),
                 new Item(Byrna),
                 new Item(Cape),
@@ -381,18 +402,14 @@ namespace Randomizer.SMZ3 {
                 new Item(ProgressiveGlove),
                 new Item(Flippers),
                 new Item(MoonPearl),
-                new Item(HalfMagic),
 
                 new Item(Grapple),
-                new Item(Charge),
                 new Item(Ice),
                 new Item(Wave),
-                new Item(Plasma),
                 new Item(Varia),
                 new Item(Gravity),
                 new Item(Morph),
                 new Item(Bombs),
-                new Item(SpringBall),
                 new Item(ScrewAttack),
                 new Item(HiJump),
                 new Item(SpaceJump),
@@ -401,15 +418,14 @@ namespace Randomizer.SMZ3 {
                 new Item(Missile),
                 new Item(Super),
                 new Item(PowerBomb),
-                new Item(PowerBomb),
+                new Item(ETank),
+                new Item(ETank),
                 new Item(ETank),
                 new Item(ETank),
                 new Item(ETank),
                 new Item(ETank),
                 new Item(ETank),
 
-                new Item(ReserveTank),
-                new Item(ReserveTank),
                 new Item(ReserveTank),
                 new Item(ReserveTank),
             };
@@ -422,24 +438,30 @@ namespace Randomizer.SMZ3 {
             return itemPool;
         }
 
-        public static List<Item> CreateNicePool(World world) {
+        public static List<Item> CreateNicePool(World world, Config cnf, Random Rnd) {
             var itemPool = new List<Item> {
+                new Item(ProgressiveShield),
+                new Item(ProgressiveShield),
+                new Item(ProgressiveShield),
                 new Item(ProgressiveTunic),
                 new Item(ProgressiveTunic),
                 new Item(ProgressiveSword),
                 new Item(ProgressiveSword),
-                new Item(SilverArrows),
                 new Item(BlueBoomerang),
                 new Item(RedBoomerang),
-                new Item(Bottle),
-                new Item(Bottle),
-                new Item(Bottle),
                 new Item(HeartContainerRefill),
+                new Item(HalfMagic),
+                new Item(Bugnet),
 
+                new Item(SpringBall),
+                new Item(Charge),
                 new Item(Spazer),
-                new Item(XRay),
+                new Item(Plasma),
             };
 
+            if (!cnf.ProgressiveBow) {
+                itemPool.AddRange(Copies(1, () => new Item(SilverArrows, world)));
+            }
             itemPool.AddRange(Copies(10, () => new Item(HeartContainer, world)));
 
             foreach (var item in itemPool) item.World = world;
@@ -450,7 +472,8 @@ namespace Randomizer.SMZ3 {
         public static List<Item> CreateJunkPool(World world) {
             var itemPool = new List<Item> {
                 new Item(Arrow),
-                new Item(OneHundredRupees)
+                new Item(OneHundredRupees),
+                new Item(XRay),
             };
 
             itemPool.AddRange(Copies(24, () => new Item(HeartPiece)));
@@ -460,14 +483,15 @@ namespace Randomizer.SMZ3 {
             itemPool.AddRange(Copies(4,  () => new Item(BombUpgrade5)));
             itemPool.AddRange(Copies(2,  () => new Item(OneRupee)));
             itemPool.AddRange(Copies(4,  () => new Item(FiveRupees)));
-            itemPool.AddRange(Copies(world.Config.Keysanity ? 23 : 28, () => new Item(TwentyRupees)));
+            itemPool.AddRange(Copies(world.Config.UseKeycards ? 23 : 28, () => new Item(TwentyRupees)));
             itemPool.AddRange(Copies(7,  () => new Item(FiftyRupees)));
             itemPool.AddRange(Copies(5,  () => new Item(ThreeHundredRupees)));
 
-            itemPool.AddRange(Copies(9,  () => new Item(ETank)));
+            itemPool.AddRange(Copies(7,  () => new Item(ETank)));
+            itemPool.AddRange(Copies(2,  () => new Item(ReserveTank)));
             itemPool.AddRange(Copies(39, () => new Item(Missile)));
             itemPool.AddRange(Copies(15, () => new Item(Super)));
-            itemPool.AddRange(Copies(8,  () => new Item(PowerBomb)));
+            itemPool.AddRange(Copies(9,  () => new Item(PowerBomb)));
 
             foreach (var item in itemPool) item.World = world;
 
@@ -519,7 +543,7 @@ namespace Randomizer.SMZ3 {
                 new Item(MapTR),
                 new Item(MapGT)
             });
-            if (!world.Config.Keysanity) {
+            if (!world.Config.UseKeycards) {
                 itemPool.AddRange(new[] {
                     new Item(CompassEP),
                     new Item(CompassDP),
@@ -586,7 +610,6 @@ namespace Randomizer.SMZ3 {
     }
 
     class Progression {
-
         public bool BigKeyEP { get; private set; }
         public bool BigKeyDP { get; private set; }
         public bool BigKeyTH { get; private set; }
@@ -731,6 +754,12 @@ namespace Randomizer.SMZ3 {
                     ItemType.Flute => Flute = true,
                     ItemType.Book => Book = true,
                     ItemType.Bottle => Bottle = true,
+                    ItemType.BottleWithRedPotion => Bottle = true,
+                    ItemType.BottleWithGreenPotion => Bottle = true,
+                    ItemType.BottleWithBluePotion => Bottle = true,
+                    ItemType.BottleWithFairy => Bottle = true,
+                    ItemType.BottleWithBee => Bottle = true,
+                    ItemType.BottleWithGoldBee => Bottle = true,
                     ItemType.Somaria => Somaria = true,
                     ItemType.Byrna => Byrna = true,
                     ItemType.Cape => Cape = true,
@@ -780,6 +809,9 @@ namespace Randomizer.SMZ3 {
                         Mitt = Glove;
                         Glove = true;
                         break;
+                    case ItemType.ProgressiveBow:
+                        Bow = true;
+                        break;
                     case ItemType.PowerBomb:
                         TwoPowerBombs = PowerBomb;
                         PowerBomb = true;
@@ -818,9 +850,9 @@ namespace Randomizer.SMZ3 {
         public static bool CanAccessDarkWorldPortal(this Progression items, Config config) {
             return config.SMLogic switch {
                 Normal =>
-                    items.CardMaridiaL1 && items.CardMaridiaL2 && items.CanUsePowerBombs() && items.Super && items.Gravity && items.SpeedBooster,
+                    (!config.UseKeycards || (items.CardMaridiaL1 && items.CardMaridiaL2)) && items.CanUsePowerBombs() && items.Super && items.Gravity && items.SpeedBooster,
                 _ =>
-                    items.CardMaridiaL1 && items.CardMaridiaL2 && items.CanUsePowerBombs() && items.Super &&
+                    (!config.UseKeycards || (items.CardMaridiaL1 && items.CardMaridiaL2)) && items.CanUsePowerBombs() && items.Super &&
                     (items.Charge || items.Super && items.Missile) &&
                     (items.Gravity || items.HiJump && items.Ice && items.Grapple) &&
                     (items.Ice || items.Gravity && items.SpeedBooster)
@@ -830,9 +862,9 @@ namespace Randomizer.SMZ3 {
         public static bool CanAccessMiseryMirePortal(this Progression items, Config config) {
             return config.SMLogic switch {
                 Normal =>
-                    (items.CardNorfairL2 || (items.SpeedBooster && items.Wave)) && items.Varia && items.Super && (items.Gravity && items.SpaceJump) && items.CanUsePowerBombs(),
+                    ((!config.UseKeycards || items.CardNorfairL2) || (items.SpeedBooster && items.Wave)) && items.Varia && items.Super && (items.Gravity && items.SpaceJump) && items.CanUsePowerBombs(),
                 _ =>
-                    (items.CardNorfairL2 || items.SpeedBooster) && items.Varia && items.Super && (
+                    ((!config.UseKeycards || items.CardNorfairL2) || items.SpeedBooster) && items.Varia && items.Super && (
                         items.CanFly() || items.HiJump || items.SpeedBooster || items.CanSpringBallJump() || items.Ice
                    ) && (items.Gravity || items.HiJump) && items.CanUsePowerBombs()
              };
@@ -860,6 +892,10 @@ namespace Randomizer.SMZ3 {
 
         public static bool CanSpringBallJump(this Progression items) {
             return items.Morph && items.SpringBall;
+        }
+
+        public static bool CanHeckRun(this Progression items) {
+            return items.Varia || items.HasEnergyReserves(7);
         }
 
         public static bool CanHellRun(this Progression items) {
@@ -894,7 +930,5 @@ namespace Randomizer.SMZ3 {
                     (world.CanAquire(items, Agahnim) || items.Hammer && items.CanLiftLight() || items.CanLiftHeavy())
             };
         }
-
     }
-
 }

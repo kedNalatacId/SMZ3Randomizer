@@ -26,6 +26,7 @@ namespace Randomizer.Shared.Contracts {
         string Mode { get; }
         List<IWorldData> Worlds { get; }
         List<Dictionary<string, string>> Playthrough { get; }
+        string Spoiler { get; }
     }
 
     public interface IItemTypeData
@@ -51,6 +52,7 @@ namespace Randomizer.Shared.Contracts {
         ISeedData GenerateSeed(IDictionary<string, string> options, string seed);
         Dictionary<int, IItemTypeData> GetItems();
         Dictionary<int, ILocationTypeData> GetLocations();
+        Dictionary<string, string> ExportConfig();
     }
 
     public enum RandomizerOptionType
@@ -72,6 +74,16 @@ namespace Randomizer.Shared.Contracts {
         RandomizerOptionType Type { get; }
         Dictionary<string, string> Values { get; }
         string Default { get; }
+    }
+
+    // Curtail pathological cases by throwing an exception
+    public class CannotFillWorldException : Exception{
+        public CannotFillWorldException() {
+        }
+        public CannotFillWorldException(string message) : base(message) {
+        }
+        public CannotFillWorldException(string message, Exception inner) : base(message, inner) {
+        }
     }
 
 }

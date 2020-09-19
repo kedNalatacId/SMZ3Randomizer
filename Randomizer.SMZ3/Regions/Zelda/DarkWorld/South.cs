@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.RewardType;
 
 namespace Randomizer.SMZ3.Regions.Zelda.DarkWorld {
@@ -29,7 +30,5 @@ namespace Randomizer.SMZ3.Regions.Zelda.DarkWorld {
                 items.CanLiftHeavy()
             );
         }
-
     }
-
 }

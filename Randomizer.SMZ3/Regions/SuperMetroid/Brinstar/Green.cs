@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SMZ3.SMLogic;
+using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
 
@@ -10,6 +11,8 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
 
         public Green(World world, Config config) : base(world, config) {
             Weight = -6;
+
+            RegionItems = new[] { CardBrinstarL1, CardBrinstarL2, CardCrateriaBoss };
 
             Locations = new List<Location> {
                 new Location(this, 13, 0x8F84AC, LocationType.Chozo, "Power Bomb (green Brinstar bottom)", Logic switch {
@@ -28,6 +31,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                 }),
                 new Location(this, 18, 0x8F8532, LocationType.Hidden, "Missile (green Brinstar behind missile)", Logic switch {
                     Normal => items => items.SpeedBooster && items.CanPassBombPassages() && items.CanOpenRedDoors(),
+                    Medium => new Requirement(items => items.CanPassBombPassages() && items.CanOpenRedDoors()),
                     _ => new Requirement(items => (items.CanPassBombPassages() || items.Morph && items.ScrewAttack) && items.CanOpenRedDoors())
                 }),
                 new Location(this, 19, 0x8F8538, LocationType.Visible, "Missile (green Brinstar behind reserve tank)", Logic switch {
@@ -44,7 +48,10 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
         }
 
         public override bool CanEnter(Progression items) {
-            return items.CanDestroyBombWalls() || items.SpeedBooster;
+            return Logic switch {
+                Normal => items.CanDestroyBombWalls(),
+                _ => items.CanDestroyBombWalls() || items.SpeedBooster
+            };
         }
 
     }

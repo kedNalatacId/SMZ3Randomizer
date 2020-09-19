@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 
 namespace Randomizer.SMZ3.Regions.Zelda.DarkWorld {
 
@@ -19,7 +20,5 @@ namespace Randomizer.SMZ3.Regions.Zelda.DarkWorld {
         public override bool CanEnter(Progression items) {
             return items.Flute && items.CanLiftHeavy() || items.CanAccessMiseryMirePortal(Config);
         }
-
     }
-
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Newtonsoft.Json;
 using static System.Linq.Enumerable;
 using Randomizer.SMZ3.Regions.Zelda;
 using static Randomizer.SMZ3.ItemType;
@@ -10,13 +11,12 @@ using static Randomizer.SMZ3.DropPrize;
 using Randomizer.SMZ3.Text;
 
 namespace Randomizer.SMZ3 {
-
     static class KeycardPlaque {
         public const ushort Level1 = 0xe0;
         public const ushort Level2 = 0xe1;
         public const ushort Boss = 0xe2;
         public const ushort None = 0x00;
-    }    
+    }
 
     static class KeycardDoors {
         public const ushort Left = 0xd414;
@@ -62,7 +62,6 @@ namespace Randomizer.SMZ3 {
     }
 
     class Patch {
-
         readonly List<World> allWorlds;
         readonly World myWorld;
         readonly string seedGuid;
@@ -88,6 +87,8 @@ namespace Randomizer.SMZ3 {
             WriteDungeonMusic(config.Keysanity);
 
             WriteDiggingGameRng();
+            if (config.RandomFlyingTiles)
+                WriteFlyingTiles();
 
             WritePrizeShuffle();
 
@@ -543,7 +544,12 @@ namespace Randomizer.SMZ3 {
             patches.Add((Snes(0x309200), Dialog.Simple(ganonThirdPhaseInvincible)));
             // ---
 
-            var silversLocation = allWorlds.SelectMany(world => world.Locations).Where(l => l.ItemIs(SilverArrows, myWorld)).First();
+            var silversLocation = allWorlds.SelectMany(world => world.Locations).First();
+            if (!config.ProgressiveBow) {
+                silversLocation = allWorlds.SelectMany(world => world.Locations).Where(l => l.ItemIs(SilverArrows, myWorld)).First();
+            } else {
+                silversLocation = allWorlds.SelectMany(world => world.Locations).Where(l => l.ItemIs(ProgressiveBow, myWorld)).Last();
+            }
             var silvers = config.GameMode == GameMode.Multiworld ?
                 Texts.GanonThirdPhaseMulti(silversLocation.Region, myWorld) :
                 Texts.GanonThirdPhaseSingle(silversLocation.Region);
@@ -562,17 +568,79 @@ namespace Randomizer.SMZ3 {
 
         void WritePlayerNames() {
             patches.AddRange(allWorlds.Select(world => (0x385000 + (world.Id * 16), PlayerNameBytes(world.Player))));
+
+            // Write myWorld.Player name to local save file while we're here; TODO -- make better
+            // possibly import ALTTPRs extended file select screen?
+            patches.Add((Snes(0x5e03fa), FileSelectPlayerNameBytes(myWorld.Player)));
+            if (myWorld.Player.Length > 4) {
+                patches.Add((Snes(0x5e08fa), FileSelectPlayerNameBytes(myWorld.Player[4..])));
+            }
+            if (myWorld.Player.Length > 8) {
+                patches.Add((Snes(0x5e0dfa), FileSelectPlayerNameBytes(myWorld.Player[8..])));
+            }
         }
 
         byte[] PlayerNameBytes(string name) {
-            name = name.Length > 12 ? name[..12] : name;
+            name = name.Length > 12 ? name[..11] : name;
             int padding = 12 - name.Length;
             if (padding > 0) {
                 double pad = padding / 2.0;
                 name = name.PadLeft(name.Length + (int)Math.Ceiling(pad));
                 name = name.PadRight(name.Length + (int)Math.Floor(pad));
             }
-            return AsAscii(name.ToUpper()).Concat(UintBytes(0)).ToArray();
+            return AsAscii(name).Concat(UintBytes(0)).ToArray();
+        }
+
+        /* File Select chars:
+           A-F = 4A-4F
+           G-V = 60-6F
+           W-Z = 80-83
+           a-p = 60-6f
+           q-z = 80-89
+           - = 89 and ~ = 8E
+           upper case has 0x01 byte post-pended; lower has 0x00
+
+            This currently only supports ASCII and doesn't fail properly for non-ascii... needs work
+        */
+        byte[] FileSelectPlayerNameBytes(string name) {
+            name = name.Length > 4 ? name[..4] : name;
+            byte[] fs_name = new byte[8];
+            int fs_name_loc = 0;
+
+            foreach (char c in name) {
+                if (c >= 'A' && c <= 'F') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 9)[0]; // Magical offset
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (c >= 'G' && c <= 'V') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 25)[0]; // Adding 0x19
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (c >= 'W' && c <= 'Z') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 41)[0]; // Adding 0x29
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (c >= 'a' && c <= 'p') {
+                    fs_name[fs_name_loc++] = UintBytes(c - 1)[0]; // Magical offset
+                    fs_name[fs_name_loc++] = 0x00;
+                } else if (c >= 'q' && c <= 'z') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 15)[0]; // Adding -1 + 0x10
+                    fs_name[fs_name_loc++] = 0x00;
+                } else if (Char.ToUpper(c) == '-') {
+                    fs_name[fs_name_loc++] = 0x89;
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (Char.ToUpper(c) == '~') {
+                    fs_name[fs_name_loc++] = 0x8E;
+                    fs_name[fs_name_loc++] = 0x01;
+                } else {
+                    Console.WriteLine(String.Join(' ', "Unsupported char:", c));
+                }
+            }
+
+            int padding = 4 - name.Length;
+            for (int i = name.Length; i < padding; i++) {
+                fs_name[fs_name_loc++] = 0x8C;
+                fs_name[fs_name_loc++] = 0x01;
+            }
+
+            return fs_name.ToArray();
         }
 
         void WriteSeedData() {
@@ -602,13 +670,16 @@ namespace Randomizer.SMZ3 {
 
         void WriteGameTitle() {
             var z3Glitch = myWorld.Config.Z3Logic switch {
-                Z3Logic.Nmg => "N",
-                Z3Logic.Owg => "O",
+                Z3Logic.Nmg    => "N",
+                Z3Logic.Owg    => "O",
+                Z3Logic.Medium => "M",
+                Z3Logic.Hard   => "H",
                 _ => "C",
             };
             var smGlitch = myWorld.Config.SMLogic switch {
                 SMLogic.Normal => "N",
-                SMLogic.Hard => "H",
+                SMLogic.Medium => "M",
+                SMLogic.Hard   => "H",
                 _ => "X",
             };
             var title = AsAscii($"ZSM{Randomizer.version}{z3Glitch}{smGlitch}{seed:X8}".PadRight(21)[..21]);
@@ -617,7 +688,7 @@ namespace Randomizer.SMZ3 {
         }
 
         void WriteKeyCardDoors() {
-            if (!myWorld.Config.Keysanity)
+            if (!myWorld.Config.UseKeycards)
                 return;
 
             ushort plaquePLm = 0xd410;
@@ -630,12 +701,12 @@ namespace Randomizer.SMZ3 {
                 new ushort[] { 0x948C, KeycardDoors.Left,       0x062E, KeycardEvents.CrateriaLevel2,        KeycardPlaque.Level2,   0x042F, 0x8222 },  // Crateria - Before Moat - Door to moat (overwrite PB door)
                 new ushort[] { 0x99BD, KeycardDoors.Left,       0x660E, KeycardEvents.CrateriaBoss,          KeycardPlaque.Boss,     0x640F, 0x8470 },  // Crateria - Before G4 - Door to G4
                 new ushort[] { 0x9879, KeycardDoors.Left,       0x062E, KeycardEvents.CrateriaBoss,          KeycardPlaque.Boss,     0x042F, 0x8420 },  // Crateria - Before BT - Door to Bomb Torizo
-                
+
                 // Brinstar
                 new ushort[] { 0x9F11, KeycardDoors.Left,       0x060E, KeycardEvents.BrinstarLevel1,        KeycardPlaque.Level1,   0x040F, 0x8784 },  // Brinstar - Blue Brinstar - Door to ceiling e-tank room
 
-                new ushort[] { 0x9AD9, KeycardDoors.Right,      0xA601, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0xA400, 0x0000 },  // Brinstar - Green Brinstar - Door to etecoon area                
-                new ushort[] { 0x9D9C, KeycardDoors.Down,       0x0336, KeycardEvents.BrinstarBoss,          KeycardPlaque.Boss,     0x0234, 0x863A },  // Brinstar - Pink Brinstar - Door to spore spawn                
+                new ushort[] { 0x9AD9, KeycardDoors.Right,      0xA601, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0xA400, 0x0000 },  // Brinstar - Green Brinstar - Door to etecoon area
+                new ushort[] { 0x9D9C, KeycardDoors.Down,       0x0336, KeycardEvents.BrinstarBoss,          KeycardPlaque.Boss,     0x0234, 0x863A },  // Brinstar - Pink Brinstar - Door to spore spawn
                 new ushort[] { 0xA130, KeycardDoors.Left,       0x161E, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0x141F, 0x881C },  // Brinstar - Pink Brinstar - Door to wave gate e-tank
                 new ushort[] { 0xA0A4, KeycardDoors.Left,       0x062E, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0x042F, 0x0000 },  // Brinstar - Pink Brinstar - Door to spore spawn super
 
@@ -649,7 +720,7 @@ namespace Randomizer.SMZ3 {
                 new ushort[] { 0xAF72, KeycardDoors.Left,       0x061E, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x041F, 0x0000 },  // Norfair - After frog speedway - Door to Bubble Mountain
                 new ushort[] { 0xAEDF, KeycardDoors.Down,       0x0206, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x0204, 0x0000 },  // Norfair - Below bubble mountain - Door to Bubble Mountain
                 new ushort[] { 0xAD5E, KeycardDoors.Right,      0x0601, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x0400, 0x0000 },  // Norfair - LN Escape - Door to Bubble Mountain
-                
+
                 new ushort[] { 0xA923, KeycardDoors.Up,         0x2DC6, KeycardEvents.NorfairBoss,           KeycardPlaque.Boss,     0x2EC4, 0x8B96 },  // Norfair - Pre-Crocomire - Door to Crocomire
 
                 // Lower Norfair
@@ -674,7 +745,6 @@ namespace Randomizer.SMZ3 {
                 new ushort[] { 0xCE40, KeycardDoors.Left,       0x060E, KeycardEvents.WreckedShipLevel1,     KeycardPlaque.Level1,   0x040F, 0x0000 },  // Wrecked Ship - Gravity Suit - Door to Bowling Alley
 
                 new ushort[] { 0xCC6F, KeycardDoors.Left,       0x064E, KeycardEvents.WreckedShipBoss,       KeycardPlaque.Boss,     0x044F, 0xC29D },  // Wrecked Ship - Pre-Phantoon - Door to Phantoon
-                
             };
 
             ushort doorId = 0x0000;
@@ -712,6 +782,11 @@ namespace Randomizer.SMZ3 {
             byte digs = (byte)(rnd.Next(30) + 1);
             patches.Add((Snes(0x308020), new byte[] { digs }));
             patches.Add((Snes(0x1DFD95), new byte[] { digs }));
+        }
+
+        void WriteFlyingTiles() {
+            byte tiles = (byte)(rnd.Next(21) + 1);
+            patches.Add((Snes(0x49BA1D), new byte[] { tiles }));
         }
 
         // Removes Sword/Shield from Uncle by moving the tiles for
@@ -784,12 +859,8 @@ namespace Randomizer.SMZ3 {
             return addr;
         }
 
-        byte[] UintBytes(int value) => BitConverter.GetBytes((uint)value);
-
+        byte[] UintBytes(int value)   => BitConverter.GetBytes((uint)value);
         byte[] UshortBytes(int value) => BitConverter.GetBytes((ushort)value);
-
-        byte[] AsAscii(string text) => Encoding.ASCII.GetBytes(text);
-
+        byte[] AsAscii(string text)   => Encoding.ASCII.GetBytes(text);
     }
-
 }

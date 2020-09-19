@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.Zelda {
@@ -20,12 +21,13 @@ namespace Randomizer.SMZ3.Regions.Zelda {
                     .AlwaysAllow((item, items) => item.Is(BigKeySW, World)),
                 new Location(this, 256+148, 0x1E99B, LocationType.Regular, "Skull Woods - Map Chest"),
                 new Location(this, 256+149, 0x1E9C8, LocationType.Regular, "Skull Woods - Pinball Room")
-                    .Allow((item, items) => item.Is(KeySW, World)),
+                    .AlwaysAllow((item, items) => item.Is(KeySW, World)),
                 new Location(this, 256+150, 0x1E99E, LocationType.Regular, "Skull Woods - Big Key Chest"),
                 new Location(this, 256+151, 0x1E9FE, LocationType.Regular, "Skull Woods - Bridge Room",
                     items => items.Firerod),
-                new Location(this, 256+152, 0x308155, LocationType.Regular, "Skull Woods - Mothula",
-                    items => items.Firerod && items.Sword && items.KeySW >= 3),
+                new Location(this, 256+152, 0x308155, LocationType.Boss, "Skull Woods - Mothula",
+                    items => items.Firerod && items.Sword && items.KeySW >= 3)
+                    .Allow((item, items) => Config.BossDrops != BossDrops.NonDungeon || !item.IsDungeonItem),
             };
         }
 
@@ -36,7 +38,5 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         public bool CanComplete(Progression items) {
             return Locations.Get("Skull Woods - Mothula").Available(items);
         }
-
     }
-
 }

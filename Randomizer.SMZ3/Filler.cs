@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Randomizer.Shared.Contracts;
+using Newtonsoft.Json;
 
 namespace Randomizer.SMZ3 {
 
@@ -27,11 +29,12 @@ namespace Randomizer.SMZ3 {
             foreach (var world in Worlds) {
                 /* The dungeon pool order is significant, don't shuffle */
                 var dungeon = Item.CreateDungeonPool(world);
-                var progression = Item.CreateProgressionPool(world);
-
+                var progression = Item.CreateProgressionPool(world, Config, Rnd);
                 InitialFillInOwnWorld(dungeon, progression, world);
 
-                if (Config.Keysanity == false) {
+                /* If not using keycards then add keycards to the "base items" list.
+                    This simplifies logic programming since it assumes that the character has the keycard */
+                if (Config.UseKeycards == false) {
                     var worldLocations = world.Locations.Empty().Shuffle(Rnd);
                     var keyCards = Item.CreateKeycards(world);
                     AssumedFill(dungeon, progression.Concat(keyCards).ToList(), worldLocations, new[] { world });
@@ -45,13 +48,14 @@ namespace Randomizer.SMZ3 {
             }
 
             progressionItems = progressionItems.Shuffle(Rnd);
-            var niceItems = Worlds.SelectMany(world => Item.CreateNicePool(world)).Shuffle(Rnd);
+
+            var niceItems = Worlds.SelectMany(world => Item.CreateNicePool(world, Config, Rnd)).Shuffle(Rnd);
             var junkItems = Worlds.SelectMany(world => Item.CreateJunkPool(world)).Shuffle(Rnd);
 
             var locations = Worlds.SelectMany(x => x.Locations).Empty().Shuffle(Rnd);
             if (Config.GameMode != GameMode.Multiworld)
                 locations = ApplyLocationWeighting(locations).ToList();
-            
+
             if (Config.GameMode == GameMode.Multiworld) {
                 /* Place moonpearls and morphs in last 40%/20% of the pool so that
                  * they will tend to place in earlier locations.
@@ -64,9 +68,8 @@ namespace Randomizer.SMZ3 {
 
             GanonTowerFill(junkItems, 2);
             AssumedFill(progressionItems, baseItems, locations, Worlds);
-            FastFill(niceItems, locations);
+            FastFill(niceItems.ToList(), locations);
             FastFill(junkItems, locations);
-
         }
 
         void ApplyItemBias(List<Item> itemPool, IEnumerable<(ItemType type, double weight)> reorder) {
@@ -96,7 +99,8 @@ namespace Randomizer.SMZ3 {
         }
 
         void InitialFillInOwnWorld(List<Item> dungeonItems, List<Item> progressionItems, World world) {
-            FillItemAtLocation(dungeonItems, ItemType.KeySW, world.Locations.Get("Skull Woods - Pinball Room"));
+            if (!Config.LiveDangerously)
+                FillItemAtLocation(dungeonItems, ItemType.KeySW, world.Locations.Get("Skull Woods - Pinball Room"));
 
             /* Check Swords option and place as needed */
             switch (Config.SwordLocation) {
@@ -110,15 +114,26 @@ namespace Randomizer.SMZ3 {
                 case MorphLocation.Early: FrontFillItemInOwnWorld(progressionItems, ItemType.Morph, world); break;
             }
 
+            if (Config.GoFast) {
+                FrontFillItemInOwnWorld(progressionItems, ItemType.Boots, world);
+                FrontFillItemInOwnWorld(progressionItems, ItemType.SpeedBooster, world);
+            }
+
             /* We place a PB and Super in Sphere 1 to make sure the filler
              * doesn't start locking items behind this when there are a
              * high chance of the trash fill actually making them available */
-            FrontFillItemInOwnWorld(progressionItems, ItemType.Super, world);
-            FrontFillItemInOwnWorld(progressionItems, ItemType.PowerBomb, world);
+            if (!Config.LiveDangerously) {
+                FrontFillItemInOwnWorld(progressionItems, ItemType.Super, world);
+                FrontFillItemInOwnWorld(progressionItems, ItemType.PowerBomb, world);
+            }
         }
 
         void AssumedFill(List<Item> itemPool, List<Item> baseItems, IEnumerable<Location> locations, IEnumerable<World> worlds) {
             var assumedItems = new List<Item>(itemPool);
+            int fail_counter = 0;
+            bool found_first_bow = false;
+            int bottles_found = 0;
+
             while (assumedItems.Count > 0) {
                 /* Try placing next item */
                 var item = assumedItems.First();
@@ -126,13 +141,46 @@ namespace Randomizer.SMZ3 {
 
                 var inventory = CollectItems(assumedItems.Concat(baseItems), worlds);
                 var location = locations.Empty().CanFillWithinWorld(item, inventory).FirstOrDefault();
+
+                // WIP -- remove when progbow works in SM
+                if (item.Type == ItemType.ProgressiveBow && location.Region is SMRegion) {
+                    assumedItems.Add(item);
+                    if (++fail_counter > locations.Empty().Count()) {
+                        throw new CannotFillWorldException("Cannot fill world (progbow)");
+                    }
+                    continue;
+                }
+                // ENDWIP
+
                 if (location == null) {
                     assumedItems.Add(item);
+                    if (++fail_counter > locations.Empty().Count()) {
+                        throw new CannotFillWorldException("Cannot fill world");
+                    }
                     continue;
                 }
 
+                /* A little bit of attempting to manipulate logic; have each subsequent item
+                    show up after the first. To add the additional item, re-shuffle it into the mix
+                    rather than removing it.
+
+                    In general this means further items should only appear after the first instance.
+                    No more random bottles before the first progression bottle (in theory). */
                 location.Item = item;
-                itemPool.Remove(item);                
+                if (item.Type == ItemType.ProgressiveBow && !found_first_bow) {
+                    assumedItems.Add(item);
+                    assumedItems = assumedItems.Shuffle(Rnd);
+                    found_first_bow = true;
+                } else if (item.IsBottle && ++bottles_found < 4) {
+                    var bottles = Item.Bottles();
+                    Item new_bottle = new Item(Config.BottleContents == BottleContents.Empty ? ItemType.Bottle : bottles[Rnd.Next(bottles.Count)]);
+                    new_bottle.World = item.World;
+                    assumedItems.Add(new_bottle);
+                    assumedItems = assumedItems.Shuffle(Rnd);
+                } else {
+                    itemPool.Remove(item);
+                }
+                fail_counter = 0;
             }
         }
 

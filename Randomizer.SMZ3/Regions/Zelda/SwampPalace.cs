@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.Zelda {
@@ -32,8 +33,9 @@ namespace Randomizer.SMZ3.Regions.Zelda {
                     items => items.KeySP && items.Hammer && items.Hookshot),
                 new Location(this, 256+143, 0x1EAAF, LocationType.Regular, "Swamp Palace - Waterfall Room",
                     items => items.KeySP && items.Hammer && items.Hookshot),
-                new Location(this, 256+144, 0x308154, LocationType.Regular, "Swamp Palace - Arrghus",
-                    items => items.KeySP && items.Hammer && items.Hookshot),
+                new Location(this, 256+144, 0x308154, LocationType.Boss, "Swamp Palace - Arrghus",
+                    items => items.KeySP && items.Hammer && items.Hookshot)
+                    .Allow((item, items) => Config.BossDrops != BossDrops.NonDungeon || !item.IsDungeonItem),
             };
         }
 
@@ -44,7 +46,5 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         public bool CanComplete(Progression items) {
             return Locations.Get("Swamp Palace - Arrghus").Available(items);
         }
-
     }
-
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.Zelda {
@@ -25,14 +26,14 @@ namespace Randomizer.SMZ3.Regions.Zelda {
                     items => items.BigKeyTT && items.Hammer &&
                         (Locations.Get("Thieves' Town - Big Chest").ItemIs(KeyTT, World) || items.KeyTT))
                     .AlwaysAllow((item, items) => item.Is(KeyTT, World) && items.Hammer),
-                new Location(this, 256+160, 0x308156, LocationType.Regular, "Thieves' Town - Blind",
-                    items => items.BigKeyTT && items.KeyTT && CanBeatBoss(items)),
+                new Location(this, 256+160, 0x308156, LocationType.Boss, "Thieves' Town - Blind",
+                    items => items.BigKeyTT && items.KeyTT && CanBeatBoss(items))
+                    .Allow((item, items) => Config.BossDrops != BossDrops.NonDungeon || !item.IsDungeonItem),
             };
         }
 
         private bool CanBeatBoss(Progression items) {
-            return items.Sword || items.Hammer ||
-                items.Somaria || items.Byrna;
+            return items.Sword || items.Hammer || items.Somaria || items.Byrna;
         }
 
         public override bool CanEnter(Progression items) {
@@ -42,7 +43,5 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         public bool CanComplete(Progression items) {
             return Locations.Get("Thieves' Town - Blind").Available(items);
         }
-
     }
-
 }

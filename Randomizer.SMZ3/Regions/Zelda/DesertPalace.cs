@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.Zelda {
@@ -22,11 +23,12 @@ namespace Randomizer.SMZ3.Regions.Zelda {
                     items => items.KeyDP),
                 new Location(this, 256+113, 0x1E9CB, LocationType.Regular, "Desert Palace - Compass Chest",
                     items => items.KeyDP),
-                new Location(this, 256+114, 0x308151, LocationType.Regular, "Desert Palace - Lanmolas",
+                new Location(this, 256+114, 0x308151, LocationType.Boss, "Desert Palace - Lanmolas",
                     items => (
                         items.CanLiftLight() ||
                         items.CanAccessMiseryMirePortal(Config) && items.Mirror
-                    ) && items.BigKeyDP && items.KeyDP && items.CanLightTorches() && CanBeatBoss(items)),
+                    ) && items.BigKeyDP && items.CanLightTorches() && CanBeatBoss(items))
+                    .Allow((item, items) => Config.BossDrops != BossDrops.NonDungeon || !item.IsDungeonItem),
             };
         }
 
@@ -45,7 +47,5 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         public bool CanComplete(Progression items) {
             return Locations.Get("Desert Palace - Lanmolas").Available(items);
         }
-
     }
-
 }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Randomizer.SMZ3 {
 
     enum LocationType {
         Regular,
+        Boss,
         HeraStandingKey,
         Pedestal,
         Ether,
@@ -27,6 +29,7 @@ namespace Randomizer.SMZ3 {
         public LocationType Type { get; set; }
         public int Address { get; set; }
         public Item Item { get; set; }
+        [JsonIgnore]
         public Region Region { get; set; }
 
         public int Weight {
@@ -40,6 +43,7 @@ namespace Randomizer.SMZ3 {
 
         public bool ItemIs(ItemType type, World world) => Item?.Is(type, world) ?? false;
         public bool ItemIsNot(ItemType type, World world) => !ItemIs(type, world);
+        public bool IsBoss => Type == LocationType.Boss;
 
         public Location(Region region, int id, int address, LocationType type, string name)
             : this(region, id, address, type, name, items => true) {
@@ -55,6 +59,17 @@ namespace Randomizer.SMZ3 {
             alwaysAllow = (item, items) => false;
             allow = (item, items) => true;
         }
+
+        /* public Location(Region region, int id, int address, LocationType type, string name, List<Requirement> access) {
+            Region  = region;
+            Id      = id;
+            Name    = name;
+            Type    = type;
+            Address = address;
+            canAccess = access;
+            alwaysAllow = (item, items) => false;
+            allow = (item, items) => true;
+        } */
 
         public Location Weighted(int? weight) {
             this.weight = weight;
@@ -119,7 +134,5 @@ namespace Randomizer.SMZ3 {
                 l.CanFill(item, worldProgression[l.Region.World.Id]) &&
                 item.World.Locations.Find(ll => ll.Id == l.Id).Available(itemWorldProgression));
         }
-
     }
-
 }

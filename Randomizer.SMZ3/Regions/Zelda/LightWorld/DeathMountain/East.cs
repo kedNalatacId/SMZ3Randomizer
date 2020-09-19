@@ -30,7 +30,5 @@ namespace Randomizer.SMZ3.Regions.Zelda.LightWorld.DeathMountain {
                 items.Hookshot
             );
         }
-
     }
-
 }

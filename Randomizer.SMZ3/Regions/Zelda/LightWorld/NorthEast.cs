@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.RewardType;
 
 namespace Randomizer.SMZ3.Regions.Zelda.LightWorld {
@@ -12,13 +13,25 @@ namespace Randomizer.SMZ3.Regions.Zelda.LightWorld {
             var sphereOne = -10;
             Locations = new List<Location> {
                 new Location(this, 256+36, 0x1DE1C3, LocationType.Regular, "King Zora",
-                    items => items.CanLiftLight() || items.Flippers),
+                    Logic switch {
+                        Normal => items => items.CanLiftLight() || items.Flippers,
+                        _ => new Requirement(items => true),
+                    }),
                 new Location(this, 256+37, 0x308149, LocationType.Regular, "Zora's Ledge",
-                    items => items.Flippers),
+                    Logic switch {
+                        Hard => items => items.Flippers || items.MoonPearl,
+                        _    => new Requirement(items => items.Flippers),
+                    }),
                 new Location(this, 256+254, 0x1E9B0, LocationType.Regular, "Waterfall Fairy - Left",
-                    items => items.Flippers),
+                    Logic switch {
+                        Normal => items => items.Flippers,
+                        _ => new Requirement(items => items.Flippers || items.MoonPearl),
+                    }),
                 new Location(this, 256+39, 0x1E9D1, LocationType.Regular, "Waterfall Fairy - Right",
-                    items => items.Flippers),
+                    Logic switch {
+                        Normal => items => items.Flippers,
+                        _ => new Requirement(items => items.Flippers || items.MoonPearl),
+                    }),
                 new Location(this, 256+40, 0x308014, LocationType.Regular, "Potion Shop",
                     items => items.Mushroom),
                 new Location(this, 256+41, 0x1EA82, LocationType.Regular, "Sahasrahla's Hut - Left").Weighted(sphereOne),

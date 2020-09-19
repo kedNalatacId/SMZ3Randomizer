@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SMZ3.SMLogic;
+using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
 
@@ -11,6 +12,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
         public RewardType Reward { get; set; } = RewardType.GoldenFourBoss;
 
         public East(World world, Config config) : base(world, config) {
+            RegionItems = new[] { CardLowerNorfairBoss };
             Locations = new List<Location> {
                 new Location(this, 73, 0x8F8F30, LocationType.Visible, "Missile (Mickey Mouse room)", Logic switch {
                     _ => new Requirement(items => items.Morph && items.CanDestroyBombWalls())
@@ -41,7 +43,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
         private bool CanExit(Progression items) {
             return Logic switch
             {
-                Normal => !Config.Keysanity || (items.CardNorfairL2 || items.Wave && items.Gravity),
+                Normal => !Config.UseKeycards || (items.CardNorfairL2 || items.Wave && items.Gravity),
                 _ => true
             };
         }
@@ -49,6 +51,10 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
         public override bool CanEnter(Progression items) {
             return Logic switch {
                 Normal =>
+                    items.Varia && (
+                        World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.SpaceJump && items.Gravity ||
+                        items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls() && items.Super && items.CanUsePowerBombs() && items.CanFly()),
+                Medium =>
                     items.Varia && (
                         World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.SpaceJump && items.Gravity ||
                         items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls() && items.Super && items.CanUsePowerBombs() && items.CanFly()),

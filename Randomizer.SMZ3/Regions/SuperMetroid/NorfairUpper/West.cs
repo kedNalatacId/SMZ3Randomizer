@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SMZ3.SMLogic;
+using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
 
@@ -9,14 +10,18 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
         public override string Area => "Norfair Upper";
 
         public West(World world, Config config) : base(world, config) {
+            RegionItems = new[] { CardLowerNorfairL1, CardNorfairL2, CardNorfairBoss };
             Locations = new List<Location> {
                 new Location(this, 50, 0x8F8B24, LocationType.Chozo, "Ice Beam", Logic switch {
-                    Normal => items => ((config.Keysanity && items.CardNorfairL1) || (!config.Keysanity && items.Super)) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
-                    _ => new Requirement(items => ((config.Keysanity && items.CardNorfairL1) || (!config.Keysanity && items.Super)) && items.Morph && (items.Varia || items.HasEnergyReserves(3)))
+                    Normal => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
+                    Medium => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanPassBombPassages() && (items.Varia || items.HasEnergyReserves(6)),
+                    _ => new Requirement(items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.Morph && (items.Varia || items.HasEnergyReserves(3)))
                 }),
                 new Location(this, 51, 0x8F8B46, LocationType.Hidden, "Missile (below Ice Beam)", Logic switch {
-                    Normal => items => ((config.Keysanity && items.CardNorfairL1) || (!config.Keysanity && items.Super)) && items.CanUsePowerBombs() && items.Varia && items.SpeedBooster,
-                    _ => new Requirement(items => ((config.Keysanity && items.CardNorfairL1) || (!config.Keysanity && items.Super)) && items.CanUsePowerBombs() && (items.Varia || items.HasEnergyReserves(3)) ||
+                    Normal => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanUsePowerBombs() && items.Varia && items.SpeedBooster,
+                    Medium => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanUsePowerBombs() && (items.Varia || items.HasEnergyReserves(6)),
+                    _ => new Requirement(items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanUsePowerBombs() &&
+                        (items.Varia || items.HasEnergyReserves(3)) ||
                         items.Varia && items.SpeedBooster && items.Super && items.CardNorfairL1)
                 }),
                 new Location(this, 53, 0x8F8BAC, LocationType.Chozo, "Hi-Jump Boots", Logic switch {

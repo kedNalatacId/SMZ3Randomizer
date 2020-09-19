@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 
 namespace Randomizer.SMZ3.Regions.Zelda.DarkWorld.DeathMountain {
 
@@ -15,7 +16,5 @@ namespace Randomizer.SMZ3.Regions.Zelda.DarkWorld.DeathMountain {
                         World.CanEnter("Light World Death Mountain West", items)),
             };
         }
-
     }
-
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Randomizer.SMZ3.Z3Logic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.Zelda {
@@ -28,8 +29,9 @@ namespace Randomizer.SMZ3.Regions.Zelda {
                         items.KeyMM >= (Locations.Get("Misery Mire - Compass Chest").ItemIs(BigKeyMM, World) ? 2 : 3)),
                 new Location(this, 256+175, 0x1EA67, LocationType.Regular, "Misery Mire - Big Chest",
                     items => items.BigKeyMM),
-                new Location(this, 256+176, 0x308158, LocationType.Regular, "Misery Mire - Vitreous",
-                    items => items.BigKeyMM && items.Lamp && items.Somaria),
+                new Location(this, 256+176, 0x308158, LocationType.Boss, "Misery Mire - Vitreous",
+                    items => items.BigKeyMM && items.Lamp && items.Somaria)
+                    .Allow((item, items) => Config.BossDrops != BossDrops.NonDungeon || !item.IsDungeonItem),
             };
         }
 
@@ -47,7 +49,5 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         public bool CanComplete(Progression items) {
             return Locations.Get("Misery Mire - Vitreous").Available(items);
         }
-
     }
-
 }

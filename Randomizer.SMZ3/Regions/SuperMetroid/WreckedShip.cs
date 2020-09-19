@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SMZ3.SMLogic;
+using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid {
 
@@ -11,6 +12,8 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
         public RewardType Reward { get; set; } = RewardType.GoldenFourBoss;
 
         public WreckedShip(World world, Config config) : base(world, config) {
+            RegionItems = new[] { CardWreckedShipL1, CardWreckedShipBoss };
+
             Locations = new List<Location> {
                 new Location(this, 128, 0x8FC265, LocationType.Visible, "Missile (Wrecked Ship middle)", Logic switch {
                     _ => new Requirement(items => items.CanPassBombPassages())
@@ -54,7 +57,17 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
             return Logic switch {
                 Normal =>
                     items.Super && (
-                        ((Config.Keysanity && items.CardCrateriaL2) || (!Config.Keysanity && items.CanUsePowerBombs())) && (
+                        ((Config.UseKeycards && items.CardCrateriaL2) || (!Config.UseKeycards && items.CanUsePowerBombs())) && (
+                            items.SpeedBooster || items.Grapple || items.SpaceJump || items.Gravity
+                        ) ||
+                        items.CanAccessMaridiaPortal(World) && items.Gravity && items.CardMaridiaL2 && (
+                            items.CanDestroyBombWalls() ||
+                            World.Locations.Get("Space Jump").Available(items)
+                        )
+                    ),
+                Medium =>
+                    items.Super && (
+                        ((Config.UseKeycards && items.CardCrateriaL2) || (!Config.UseKeycards && items.CanUsePowerBombs())) && (
                             items.SpeedBooster || items.Grapple || items.SpaceJump || items.Gravity
                         ) ||
                         items.CanAccessMaridiaPortal(World) && items.Gravity && items.CardMaridiaL2 && (
@@ -64,7 +77,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                     ),
                 _ =>
                     items.Super && (
-                        ((Config.Keysanity && items.CardCrateriaL2) || (!Config.Keysanity && items.CanUsePowerBombs())) ||
+                        ((Config.UseKeycards && items.CardCrateriaL2) || (!Config.UseKeycards && items.CanUsePowerBombs())) ||
                         items.CanAccessMaridiaPortal(World) && ( 
                             items.HiJump && items.CanPassBombPassages() && items.CardMaridiaL2 ||
                             items.Gravity && (
