@@ -460,7 +460,7 @@ namespace Randomizer.SMZ3 {
             itemPool.AddRange(Copies(4,  () => new Item(BombUpgrade5)));
             itemPool.AddRange(Copies(2,  () => new Item(OneRupee)));
             itemPool.AddRange(Copies(4,  () => new Item(FiveRupees)));
-            itemPool.AddRange(Copies(world.Config.Keysanity ? 23 : 28, () => new Item(TwentyRupees)));
+            itemPool.AddRange(Copies(world.Config.Keysanity && world.Config.UseKeycards ? 23 : 28, () => new Item(TwentyRupees)));
             itemPool.AddRange(Copies(7,  () => new Item(FiftyRupees)));
             itemPool.AddRange(Copies(5,  () => new Item(ThreeHundredRupees)));
 
@@ -519,7 +519,7 @@ namespace Randomizer.SMZ3 {
                 new Item(MapTR),
                 new Item(MapGT)
             });
-            if (!world.Config.Keysanity) {
+            if (!world.Config.Keysanity || !world.Config.UseKeycards) {
                 itemPool.AddRange(new[] {
                     new Item(CompassEP),
                     new Item(CompassDP),
@@ -818,9 +818,9 @@ namespace Randomizer.SMZ3 {
         public static bool CanAccessDarkWorldPortal(this Progression items, Config config) {
             return config.SMLogic switch {
                 Normal =>
-                    items.CardMaridiaL1 && items.CardMaridiaL2 && items.CanUsePowerBombs() && items.Super && items.Gravity && items.SpeedBooster,
+                    (!config.UseKeycards || (items.CardMaridiaL1 && items.CardMaridiaL2)) && items.CanUsePowerBombs() && items.Super && items.Gravity && items.SpeedBooster,
                 _ =>
-                    items.CardMaridiaL1 && items.CardMaridiaL2 && items.CanUsePowerBombs() && items.Super &&
+                    (!config.UseKeycards || (items.CardMaridiaL1 && items.CardMaridiaL2)) && items.CanUsePowerBombs() && items.Super &&
                     (items.Charge || items.Super && items.Missile) &&
                     (items.Gravity || items.HiJump && items.Ice && items.Grapple) &&
                     (items.Ice || items.Gravity && items.SpeedBooster)
@@ -830,9 +830,9 @@ namespace Randomizer.SMZ3 {
         public static bool CanAccessMiseryMirePortal(this Progression items, Config config) {
             return config.SMLogic switch {
                 Normal =>
-                    (items.CardNorfairL2 || (items.SpeedBooster && items.Wave)) && items.Varia && items.Super && (items.Gravity && items.SpaceJump) && items.CanUsePowerBombs(),
+                    ((!config.UseKeycards || items.CardNorfairL2) || (items.SpeedBooster && items.Wave)) && items.Varia && items.Super && (items.Gravity && items.SpaceJump) && items.CanUsePowerBombs(),
                 _ =>
-                    (items.CardNorfairL2 || items.SpeedBooster) && items.Varia && items.Super && (
+                    ((!config.UseKeycards || items.CardNorfairL2) || items.SpeedBooster) && items.Varia && items.Super && (
                         items.CanFly() || items.HiJump || items.SpeedBooster || items.CanSpringBallJump() || items.Ice
                    ) && (items.Gravity || items.HiJump) && items.CanUsePowerBombs()
              };

@@ -25,6 +25,7 @@ namespace Randomizer.SMZ3 {
             Config.GetRandomizerOption<SwordLocation>("First Sword"),
             Config.GetRandomizerOption<MorphLocation>("Morph Ball"),
             Config.GetRandomizerOption<KeyShuffle>("Key shuffle"),
+            Config.GetRandomizerOption<Keycards>("Keycards"),
             new RandomizerOption {
                 Key = "seed", Description = "Seed", Type = Seed
             },

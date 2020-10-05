@@ -31,7 +31,7 @@ namespace Randomizer.SMZ3 {
 
                 InitialFillInOwnWorld(dungeon, progression, world);
 
-                if (Config.Keysanity == false) {
+                if (Config.Keysanity == false || Config.UseKeycards == false) {
                     var worldLocations = world.Locations.Empty().Shuffle(Rnd);
                     var keyCards = Item.CreateKeycards(world);
                     AssumedFill(dungeon, progression.Concat(keyCards).ToList(), worldLocations, new[] { world });

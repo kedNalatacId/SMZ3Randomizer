@@ -20,7 +20,7 @@ namespace Randomizer.SMZ3 {
             var items = new List<Item>();
             
             foreach (var world in worlds) {
-                if (!world.Config.Keysanity) {
+                if (!world.Config.Keysanity || !world.Config.UseKeycards) {
                     items.AddRange(Item.CreateKeycards(world));
                 }
             }
