@@ -32,7 +32,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
             return Logic switch {
                 Normal =>
                     items.Varia && (
-                        World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.SpaceJump && items.Gravity && ((!Config.UseKeycards || items.CardNorfairL1) && items.SpeedBooster || (!Config.UseKeycards || items.CardNorfairL2) || items.Wave && items.SpeedBooster) ||
+                        World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.SpaceJump && items.Gravity && (items.CardNorfairL1 && items.SpeedBooster || items.CardNorfairL2 || items.Wave && items.SpeedBooster) ||
                         items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls()),
                 _ =>
                     World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.Varia && (items.HiJump || items.Gravity) ||

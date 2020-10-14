@@ -31,6 +31,8 @@ namespace Randomizer.SMZ3 {
 
                 InitialFillInOwnWorld(dungeon, progression, world);
 
+                /* If not using keycards then add keycards to the "base items" list.
+                    This simplifies logic programming since it assumes that the character has the keycard */
                 if (Config.Keysanity == false || Config.UseKeycards == false) {
                     var worldLocations = world.Locations.Empty().Shuffle(Rnd);
                     var keyCards = Item.CreateKeycards(world);
@@ -51,7 +53,7 @@ namespace Randomizer.SMZ3 {
             var locations = Worlds.SelectMany(x => x.Locations).Empty().Shuffle(Rnd);
             if (Config.GameMode != GameMode.Multiworld)
                 locations = ApplyLocationWeighting(locations).ToList();
-            
+
             if (Config.GameMode == GameMode.Multiworld) {
                 /* Place moonpearls and morphs in last 40%/20% of the pool so that
                  * they will tend to place in earlier locations.

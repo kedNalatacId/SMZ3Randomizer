@@ -95,7 +95,7 @@ namespace Randomizer.SMZ3 {
         public KeyShuffle KeyShuffle { get; set; } = KeyShuffle.None;
         public bool Keysanity => KeyShuffle != KeyShuffle.None;
         public Keycards Keycards { get; set; } = Keycards.No;
-        public bool UseKeycards => Keycards != Keycards.No;
+        public bool UseKeycards => !Keysanity || Keycards != Keycards.No;
         public bool Race { get; set; } = false;
         public GanonInvincible GanonInvincible { get; set; } = GanonInvincible.BeforeCrystals;
 
@@ -108,7 +108,7 @@ namespace Randomizer.SMZ3 {
             Goal = ParseOption(options, Goal.DefeatBoth);
             GanonInvincible = ParseOption(options, GanonInvincible.BeforeCrystals);
             KeyShuffle = ParseOption(options, KeyShuffle.None);
-            Keycards = ParseOption(options, Keycards.No);
+            Keycards = ParseOption(options, Keycards.Yes);
             Race = ParseOption(options, "Race", false);
         }
 
