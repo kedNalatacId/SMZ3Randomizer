@@ -12,21 +12,63 @@ namespace Randomizer.CLI.Verbs {
 
     abstract class GenSeedOptions {
 
-        [Option(
-            HelpText = "Generate a singleworld mode seed (defaults to multiworld")]
-        public bool Single { get; set; }
+        [Option('c', "config",
+            Default  = @".\seed_options.json",
+            HelpText = "Options Config File")]
+        public string ConfigFile { get; set; }
+
+        [Option('m', "multi",
+            HelpText = "Generate a multiworld mode seed (defaults to single)")]
+        public bool Multi { get; set; }
 
         [Option('p', "players", Default = 1,
             HelpText = "The number of players for seeds")]
         public int Players { get; set; }
 
-        [Option('n', "normal",
-            HelpText = "Generate seeds with Normal SM logic (default)")]
-        public bool Normal { get; set; }
+        [Option("smlogic",
+            Default="Normal",
+            HelpText = "SM logic (default is Normal)")]
+        public string SMLogic { get; set; }
 
-        [Option('h', "hard",
-            HelpText = "Generate seeds with Hard SM logic")]
-        public bool Hard { get; set; }
+        [Option("z3logic",
+            Default="Normal",
+            HelpText = "Zelda logic (default is Normal)")]
+        public string Z3Logic { get; set; }
+
+        [Option("sword",
+            Default="Randomized",
+            HelpText = "Zelda Sword Location (default is Randomized)")]
+        public string SwordLocation { get; set; }
+
+        [Option("morph",
+            Default="Randomized",
+            HelpText = "SM Morph Ball Location (default is Randomized)")]
+        public string MorphLocation { get; set; }
+
+        [Option('g',"goal",
+            Default="DefeatBoth",
+            HelpText = "Goal of Seed (default is DefeatBoth)")]
+        public string Goal { get; set; }
+
+        [Option('k', "keyshuffle",
+            Default="none",
+            HelpText = "What level of key shuffle to use (default is None)")]
+        public string KeyShuffle { get; set; }
+
+        [Option("keycards",
+            Default="yes",
+            HelpText = "Whether to use KeyCards with Keysanity or not (default is yes)")]
+        public string Keycards { get; set; }
+
+        [Option('r',"race",
+            Default=false,
+            HelpText = "Whether this is a Race seed or not (default is false)")]
+        public bool Race { get; set; }
+
+        [Option("ganoninvincible",
+            Default="Never",
+            HelpText = "Whether Ganon is invincible at any time (default is Never)")]
+        public string GanonInvincible { get; set; }
 
         [Option('l', "loop",
             HelpText = "Generate seeds repeatedly")]
@@ -36,7 +78,7 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Generate a specific seed")]
         public string Seed { get; set; } = string.Empty;
 
-        [Option(
+        [Option("rom",
             HelpText = "Compile rom file of the first world for each seed. Use the ips option to provide all required IPS patchs.")]
         public bool Rom { get; set; }
 
@@ -50,7 +92,7 @@ namespace Randomizer.CLI.Verbs {
 
         [Option(
             HelpText = "Write patch and playthrough to the console instead of directly to files")]
-        public bool Console { get; set; }
+        public bool ToConsole { get; set; }
 
         [Option(
             HelpText = "Show json formated playthrough for each seed")]
@@ -60,81 +102,81 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Show json formated patch for each world in the seed")]
         public bool Patch { get; set; }
 
+        [Option("smfile",
+            Default = @".\Super_Metroid_JU_.sfc",
+            HelpText = "Super Metroid ROM File")]
+        public string smFile { get; set; }
+
+        [Option("z3file",
+            Default = @".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc",
+            HelpText = "Zelda: ALTTP ROM File")]
+        public string z3File { get; set; }
+
         public virtual string LogicName { get; }
         public virtual string LogicValue { get; }
-
-        protected const string smFile = @".\Super_Metroid_JU_.sfc";
-        protected const string z3File = @".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc";
+        public virtual string SeedMode { get; }
 
         public abstract IRandomizer NewRandomizer();
-        public abstract byte[] BaseRom();
+
+        public byte[] BaseRom { get; set; }
+        public bool BaseRomSet { get; set; }
 
     }
 
     [Verb("sm", HelpText = "Generate Super Metroid seeds")]
     class SMSeedOptions : GenSeedOptions {
 
-        readonly Lazy<byte[]> smRom;
-
-        public override string LogicName => "logic";
-        public override string LogicValue => this switch {
-            var o when o.Hard => "tournament",
-            var o when o.Normal => "casual",
+        public override string LogicName     => "logic";
+        public override string LogicValue    => this switch {
+            var o when o.SMLogic == "Hard"   => "tournament",
+            var o when o.SMLogic == "Normal" => "casual",
             _ => "casual",
         };
+        public override string SeedMode => "sm";
 
-        public SMSeedOptions() {
-            smRom = new Lazy<byte[]>(() => {
-                using var ips = OpenReadInnerStream(Ips.First());
-                var rom = File.ReadAllBytes(smFile);
-                FileData.Rom.ApplyIps(rom, ips);
-                return rom;
-            });
-        }
+        public SMSeedOptions() { }
 
         public override IRandomizer NewRandomizer() => new SuperMetroid.Randomizer();
-        public override byte[] BaseRom() => (byte[]) smRom.Value.Clone();
 
     }
 
     [Verb("smz3", HelpText = "Generate SMZ3 combo seeds")]
     class SMZ3SeedOptions : GenSeedOptions {
 
-        readonly Lazy<byte[]> smz3Rom;
-
-        public override string LogicName => "smlogic";
-        public override string LogicValue => this switch {
-            var o when o.Hard => "hard",
-            var o when o.Normal => "normal",
-            _ => "normal"
+        public override string LogicName     => "smlogic";
+        public override string LogicValue    => this switch {
+            var o when o.SMLogic == "Hard"   => "hard",
+            var o when o.SMLogic == "Normal" => "normal",
+            _ => "Normal"
         };
+        public override string SeedMode => "smz3";
 
-        public SMZ3SeedOptions() {
-            smz3Rom = new Lazy<byte[]>(() => {
-                using var sm = File.OpenRead(smFile);
-                using var z3 = File.OpenRead(z3File);
-                using var ips = OpenReadInnerStream(Ips.First());
-                var rom = FileData.Rom.CombineSMZ3Rom(sm, z3);
-                FileData.Rom.ApplyIps(rom, ips);
-                return rom;
-            });
-        }
+        public SMZ3SeedOptions() { }
 
         public override IRandomizer NewRandomizer() => new SMZ3.Randomizer();
-        public override byte[] BaseRom() => (byte[]) smz3Rom.Value.Clone();
 
     }
 
     static class GenSeed {
-
         public static void Run(GenSeedOptions opts) {
+            if (!String.IsNullOrEmpty(opts.ConfigFile) && File.Exists(opts.ConfigFile)) {
+                ParseConfig(opts);
+            }
+
             if (opts.Players < 1 || opts.Players > 64)
                 throw new ArgumentOutOfRangeException("players", "The players parameter must fall within the range 1-64");
 
             var optionList = new[] {
-                ("gamemode", opts.Single ? "normal" : "multiworld"),
+                ("gamemode", opts.Multi ? "multiworld" : "normal"),
                 (opts.LogicName, opts.LogicValue),
                 ("players", opts.Players.ToString()),
+                ("swordlocation", opts.SwordLocation),
+                ("morphlocation", opts.MorphLocation),
+                ("goal", opts.Goal),
+                ("keyshuffle", opts.KeyShuffle),
+                ("keycards", opts.Keycards),
+                ("race", opts.Race.ToString()),
+                ("ganoninvincible", opts.GanonInvincible),
             };
             var players = from n in Enumerable.Range(0, opts.Players)
                           select ($"player-{n}", $"Player {n + 1}");
@@ -164,18 +206,19 @@ namespace Randomizer.CLI.Verbs {
             if (opts.Rom) {
                 try {
                     var world = data.Worlds.First();
-                    var rom = opts.BaseRom();
+                    ConstructRom(opts);
+                    var rom = opts.BaseRom;
                     Rom.ApplySeed(rom, world.Patches);
                     AdditionalPatches(rom, opts.Ips.Skip(1));
                     ApplyRdcResources(rom, opts.Rdc);
-                    File.WriteAllBytes($"{data.Game} {data.Logic} - {data.Seed}{(!opts.Single ? $" - {world.Player}" : "")}.sfc", rom);
+                    File.WriteAllBytes($"{data.Game} {data.Logic} - {data.Seed}{(opts.Multi ? $" - {world.Player}" : "")}.sfc", rom);
                 } catch (Exception e) {
                     Console.Error.WriteLine(e.Message);
                 }
             }
             if (opts.Playthrough) {
                 var text = JsonConvert.SerializeObject(data.Playthrough, Formatting.Indented);
-                if (opts.Console) {
+                if (opts.ToConsole) {
                     Console.WriteLine(text);
                     Console.ReadLine();
                 } else {
@@ -187,7 +230,7 @@ namespace Randomizer.CLI.Verbs {
                     data.Worlds.ToDictionary(x => x.Player, x => x.Patches), Formatting.Indented,
                     new PatchWriteConverter()
                 );
-                if (opts.Console) {
+                if (opts.ToConsole) {
                     Console.WriteLine(text);
                     Console.ReadLine();
                 } else {
@@ -212,6 +255,61 @@ namespace Randomizer.CLI.Verbs {
                 if (content.TryParse<SamusSprite>(stream, out block))
                     (block as DataBlock)?.Apply(rom);
             }
+        }
+
+        private static void ConstructRom(GenSeedOptions opts) {
+            if (opts.BaseRomSet) {
+                return;
+            }
+
+            Lazy<byte[]> fullRom;
+            if (opts.SeedMode == "sm") {
+                fullRom = new Lazy<byte[]>(() => {
+                    using var ips = OpenReadInnerStream(opts.Ips.First());
+                    var rom = File.ReadAllBytes(opts.smFile);
+                    FileData.Rom.ApplyIps(rom, ips);
+                    return rom;
+                });
+            } else if (opts.SeedMode == "smz3") {
+                fullRom = new Lazy<byte[]>(() => {
+                    using var sm = File.OpenRead(opts.smFile);
+                    using var z3 = File.OpenRead(opts.z3File);
+                    using var ips = OpenReadInnerStream(opts.Ips.First());
+                    var rom = FileData.Rom.CombineSMZ3Rom(sm, z3);
+                    FileData.Rom.ApplyIps(rom, ips);
+                    return rom;
+                });
+            } else {
+                throw new Exception("Only Seed Modes available are 'sm' and 'smz3'");
+            }
+
+            opts.BaseRom = (byte[]) fullRom.Value.Clone();
+            opts.BaseRomSet = true;
+        }
+
+        private static void ParseConfig(GenSeedOptions opts) {
+            Dictionary<string, object> conf = new Dictionary<string, object>();
+
+            using (StreamReader r = File.OpenText(opts.ConfigFile)) {
+                string json = r.ReadToEnd();
+                conf = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+            }
+
+            opts.Multi = conf.ContainsKey("Multi") ? (bool)conf["Multi"] : false;
+            opts.Players = conf.ContainsKey("Players") ? (int)conf["Players"] : 1;
+            opts.SwordLocation = conf.ContainsKey("SwordLocation") ? (string)conf["SwordLocation"] : "Randomized";
+            opts.MorphLocation = conf.ContainsKey("MorphLocation") ? (string)conf["Morphlocation"] : "Randomized";
+            opts.Goal = conf.ContainsKey("Goal") ? (string)conf["Goal"] : "DefeatBoth";
+            opts.KeyShuffle = conf.ContainsKey("KeyShuffle") ? (string)conf["KeyShuffle"] : "none";
+            opts.Keycards = conf.ContainsKey("Keycards") ? (string)conf["Keycards"] : "yes";
+            opts.Race = conf.ContainsKey("Race") ? (bool)conf["Race"] : false;
+            opts.GanonInvincible = conf.ContainsKey("GanonInvincible") ? (string)conf["GanonInvincible"] : "Never";
+            opts.Rom = conf.ContainsKey("Rom") ? (bool)conf["Rom"] : false;
+            /* opts.Ips = conf.ContainsKey("Ips") ? (string[])conf["Ips"] : new String[]{};
+            opts.Rdc = conf.ContainsKey("Rdc") ? (string[])conf["Rdc"] : new String[]{}; */
+            opts.Playthrough = conf.ContainsKey("Playthrough") ? (bool)conf["Playthrough"] : false;
+            opts.smFile = conf.ContainsKey("smFile") ? (string)conf["smFile"] : "";
+            opts.z3File = conf.ContainsKey("z3File") ? (string)conf["z3File"] : "";
         }
 
         public class PatchWriteConverter : JsonConverter<IDictionary<int, byte[]>> {
