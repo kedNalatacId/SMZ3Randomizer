@@ -1,5 +1,5 @@
 
-Getting Started with the Web GUI:
+## Getting Started with the Web GUI:
 
 1. Clone the SMZ3 Repository
   - git clone https://github.com/kedNalatacId/SMZ3Randomizer
@@ -34,7 +34,7 @@ Getting Started with the Web GUI:
     - or the postgress.app
 
 7. Initialize postgres database (from command line)
-  - createdb `whoami`
+  - createdb \`whoami\`
     - this is needed to access psql to begin with
   - psql
     - open postgres to do some adminitration
@@ -56,7 +56,7 @@ Getting Started with the Web GUI:
   - Enjoy!
 
 
-Getting Started with CLI:
+## Getting Started with CLI:
 
 1. Clone the SMZ3 Repository
   - git clone https://github.com/kedNalatacId/SMZ3Randomizer
