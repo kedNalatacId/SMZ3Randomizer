@@ -7,10 +7,12 @@ Getting Started with the Web GUI:
   - git submodule update
     - Make sure to pull in the alttp_sm_combo_randomizer_rom submodule as it will be needed later
 
-2. Install dotnet 3.1 for mac
+2. Install dotnet 3.1
   - https://dotnet.microsoft.com/download/dotnet-core/3.1
-  - dotnet tool install --global dotnet-ef
-  - You may have to run "dotnet tool restore"
+  - From command line:
+    - dotnet tool install --global dotnet-ef
+    - run "dotnet ef"
+      - If it doesn't work, you may need to run "dotnet tool restore"
 
 3. Install VSCode
   - https://code.visualstudio.com/download
@@ -26,11 +28,12 @@ Getting Started with the Web GUI:
   - say "yes" when VSCode asks if you want to install / restore
 
 6. Install Postgres
-  - brew install postgres
-    - brew services start postgresql
-  - or the postgress.app
+  - On a mac:
+    - brew install postgres
+      - brew services start postgresql
+    - or the postgress.app
 
-7. Initialize postgres database (assuming brew install here)
+7. Initialize postgres database (from command line)
   - createdb `whoami`
     - this is needed to access psql to begin with
   - psql
@@ -48,7 +51,8 @@ Getting Started with the Web GUI:
   - dotnet ef database update InitializeDatabase
 
 9. Open the WebRandomizer.csproj in VSCode and
-  select Run->Start Debugging (F5)
+  select Run->Start Debugging (or hit F5)
+
 
 Getting Started with CLI:
 
@@ -58,16 +62,13 @@ Getting Started with CLI:
   - git submodule update
     - Make sure to pull in the alttp_sm_combo_randomizer_rom submodule as it will be needed later
 
-2. Install mono for mac (optional; you can use msbuild instead of "dotnet build" as you like)
-  - https://www.mono-project.com/docs/getting-started/install/mac/
-
-3. Install dotnet 3.1 for mac
+2. Install dotnet 3.1 for mac
   - https://dotnet.microsoft.com/download/dotnet-core/3.1
 
-4. Install python3
+3. Install python3
   - brew install python3 (is one option)
 
-5. Build asar
+4. Build asar
   - git clone https://github.com/RPGHacker/asar
   - cd asar
   - cmake src && make
@@ -75,19 +76,21 @@ Getting Started with CLI:
   - either make a symlink from the asar binary into the alttp_sm_combo_randomizer_rom
     directory, or edit the build.sh and remove the "./" from "./asar"
 
-6. Build the IPS file
+5. Build the IPS file
   - cd into alttp_sm_combo_randomizer_rom
   - sh build.sh
   - copy the resultant resources/zsm.ips file somewhere useful (or use it where it is)
 
-7. Get a copy of the SM and Z3 ROMs
+6. Get a copy of the SM and Z3 ROMs
   - Sorry... can't help you here
+  - Use your favorite search engine for help
 
-8. cd into Randomizer.CLI
+7. cd into Randomizer.CLI
   - run "dotnet restore" to restore the package files
-  - runs NuGet under the hood (which is what the error message will mention)
+    - runs NuGet under the hood (which is what the error message will mention)
   - run "dotnet build" to build the project
+    - as a test, not necessary
 
-9. dotnet run smz3 --rom <options>
+8. dotnet run smz3 --rom <options>
   - will create the rom in the local directory
   - Enjoy!
