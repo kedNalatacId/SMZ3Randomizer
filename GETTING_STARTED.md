@@ -50,8 +50,10 @@ Getting Started with the Web GUI:
   - cd into the WebRandomizer directory
   - dotnet ef database update InitializeDatabase
 
-9. Open the WebRandomizer.csproj in VSCode and
-  select Run->Start Debugging (or hit F5)
+9. Open the WebRandomizer.csproj in VSCode and select Run->Start Debugging (or hit F5)
+  - It will automatically open a web browser to your localhost:5001
+  - Click on "Generate randomized game" and follow instructions
+  - Enjoy!
 
 
 Getting Started with CLI:
