@@ -55,7 +55,7 @@ namespace Randomizer.SMZ3 {
                 }
 
                 foreach (var location in newLocations) {
-                    if ((config.Keysanity && !location.Item.Progression && !location.Item.IsDungeonItem && !location.Item.IsKeycard) || (!config.Keysanity && !location.Item.Progression))
+                    if ((config.UseKeycards && !location.Item.Progression && !location.Item.IsDungeonItem && !location.Item.IsKeycard) || (!config.UseKeycards && !location.Item.Progression))
                         continue;
 
                     if (config.GameMode == GameMode.Multiworld) {
