@@ -1,0 +1,9 @@
+{
+    "smFile": "/path/to/Super Metroid (Japan, USA) (En,Ja).sfc",
+    "z3File": "/path/to/Zelda no Densetsu - Kamigami no Triforce (Japan).sfc",
+    "KeyShuffle": "keysanity",
+    "Playthrough": true,
+    "Rom": true,
+    "Ips": [ "/path/to/zsm.ips.gz" ],
+    "Rdc": [ "/path/to/dark_samus.2.sm.rdc.gz" ]
+}
