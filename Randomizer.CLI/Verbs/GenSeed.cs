@@ -12,11 +12,6 @@ namespace Randomizer.CLI.Verbs {
 
     abstract class GenSeedOptions {
 
-        [Option('c', "config",
-            Default  = @".\seed_options.json",
-            HelpText = "Options Config File")]
-        public string ConfigFile { get; set; }
-
         [Option('m', "multi",
             HelpText = "Generate a multiworld mode seed (defaults to single)")]
         public bool Multi { get; set; }
@@ -51,13 +46,13 @@ namespace Randomizer.CLI.Verbs {
         public string Goal { get; set; }
 
         [Option('k', "keyshuffle",
-            Default="none",
+            Default="None",
             HelpText = "What level of key shuffle to use (default is None)")]
         public string KeyShuffle { get; set; }
 
         [Option("keycards",
-            Default="yes",
-            HelpText = "Whether to use KeyCards with Keysanity or not (default is yes)")]
+            Default="None",
+            HelpText = "Whether to use KeyCards with Keysanity or not (default is None)")]
         public string Keycards { get; set; }
 
         [Option('r',"race",
@@ -159,10 +154,6 @@ namespace Randomizer.CLI.Verbs {
 
     static class GenSeed {
         public static void Run(GenSeedOptions opts) {
-            if (!String.IsNullOrEmpty(opts.ConfigFile) && File.Exists(opts.ConfigFile)) {
-                ParseConfig(opts);
-            }
-
             if (opts.Players < 1 || opts.Players > 64)
                 throw new ArgumentOutOfRangeException("players", "The players parameter must fall within the range 1-64");
 
@@ -285,31 +276,6 @@ namespace Randomizer.CLI.Verbs {
 
             opts.BaseRom = (byte[]) fullRom.Value.Clone();
             opts.BaseRomSet = true;
-        }
-
-        private static void ParseConfig(GenSeedOptions opts) {
-            Dictionary<string, object> conf = new Dictionary<string, object>();
-
-            using (StreamReader r = File.OpenText(opts.ConfigFile)) {
-                string json = r.ReadToEnd();
-                conf = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-            }
-
-            opts.Multi = conf.ContainsKey("Multi") ? (bool)conf["Multi"] : false;
-            opts.Players = conf.ContainsKey("Players") ? (int)conf["Players"] : 1;
-            opts.SwordLocation = conf.ContainsKey("SwordLocation") ? (string)conf["SwordLocation"] : "Randomized";
-            opts.MorphLocation = conf.ContainsKey("MorphLocation") ? (string)conf["Morphlocation"] : "Randomized";
-            opts.Goal = conf.ContainsKey("Goal") ? (string)conf["Goal"] : "DefeatBoth";
-            opts.KeyShuffle = conf.ContainsKey("KeyShuffle") ? (string)conf["KeyShuffle"] : "none";
-            opts.Keycards = conf.ContainsKey("Keycards") ? (string)conf["Keycards"] : "yes";
-            opts.Race = conf.ContainsKey("Race") ? (bool)conf["Race"] : false;
-            opts.GanonInvincible = conf.ContainsKey("GanonInvincible") ? (string)conf["GanonInvincible"] : "Never";
-            opts.Rom = conf.ContainsKey("Rom") ? (bool)conf["Rom"] : false;
-            /* opts.Ips = conf.ContainsKey("Ips") ? (string[])conf["Ips"] : new String[]{};
-            opts.Rdc = conf.ContainsKey("Rdc") ? (string[])conf["Rdc"] : new String[]{}; */
-            opts.Playthrough = conf.ContainsKey("Playthrough") ? (bool)conf["Playthrough"] : false;
-            opts.smFile = conf.ContainsKey("smFile") ? (string)conf["smFile"] : "";
-            opts.z3File = conf.ContainsKey("z3File") ? (string)conf["z3File"] : "";
         }
 
         public class PatchWriteConverter : JsonConverter<IDictionary<int, byte[]>> {

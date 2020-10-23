@@ -33,7 +33,7 @@ namespace Randomizer.SMZ3 {
 
                 /* If not using keycards then add keycards to the "base items" list.
                     This simplifies logic programming since it assumes that the character has the keycard */
-                if (Config.Keysanity == false || Config.UseKeycards == false) {
+                if (Config.UseKeycards == false) {
                     var worldLocations = world.Locations.Empty().Shuffle(Rnd);
                     var keyCards = Item.CreateKeycards(world);
                     AssumedFill(dungeon, progression.Concat(keyCards).ToList(), worldLocations, new[] { world });

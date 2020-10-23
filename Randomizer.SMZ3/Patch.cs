@@ -617,7 +617,7 @@ namespace Randomizer.SMZ3 {
         }
 
         void WriteKeyCardDoors() {
-            if (!myWorld.Config.Keysanity || !myWorld.Config.UseKeycards)
+            if (!myWorld.Config.UseKeycards)
                 return;
 
             ushort plaquePLm = 0xd410;

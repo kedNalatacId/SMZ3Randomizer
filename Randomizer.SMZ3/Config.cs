@@ -66,12 +66,12 @@ namespace Randomizer.SMZ3 {
         Keysanity
     }
 
-    [DefaultValue(No)]
+    [DefaultValue(None)]
     enum Keycards {
-        [Description("no")]
-        No,
-        [Description("yes")]
-        Yes
+        [Description("None")]
+        None,
+        [Description("Keysanity")]
+        Keysanity
     }
 
     enum GanonInvincible {
@@ -94,8 +94,8 @@ namespace Randomizer.SMZ3 {
         public Goal Goal { get; set; } = Goal.DefeatBoth;
         public KeyShuffle KeyShuffle { get; set; } = KeyShuffle.None;
         public bool Keysanity => KeyShuffle != KeyShuffle.None;
-        public Keycards Keycards { get; set; } = Keycards.No;
-        public bool UseKeycards => !Keysanity || Keycards != Keycards.No;
+        public Keycards Keycards { get; set; } = Keycards.None;
+        public bool UseKeycards => Keycards != Keycards.None;
         public bool Race { get; set; } = false;
         public GanonInvincible GanonInvincible { get; set; } = GanonInvincible.BeforeCrystals;
 
@@ -108,7 +108,7 @@ namespace Randomizer.SMZ3 {
             Goal = ParseOption(options, Goal.DefeatBoth);
             GanonInvincible = ParseOption(options, GanonInvincible.BeforeCrystals);
             KeyShuffle = ParseOption(options, KeyShuffle.None);
-            Keycards = ParseOption(options, Keycards.Yes);
+            Keycards = ParseOption(options, Keysanity ? Keycards.Keysanity : Keycards.None);
             Race = ParseOption(options, "Race", false);
         }
 
