@@ -181,7 +181,9 @@ namespace Randomizer.SMZ3 {
                 Goal            = ParseOption(options, Goal.DefeatBoth);
                 GoFast          = Rnd.Next(100) < 10 ? true : false;
                 LiveDangerously = Rnd.Next(100) < 70 ? true : false;
-                ProgressiveBow  = Rnd.Next(100) < 80 ? true : false;
+                // WIP
+                // ProgressiveBow  = Rnd.Next(100) < 60 ? true : false;
+                ProgressiveBow  = false;
                 KeyShuffle      = KeyShuffle.Mystery;
                 Keycards        = Keycards.Mystery;
                 RandomFlyingTiles = Rnd.Next(100) < 80 ? true : false;

@@ -488,8 +488,6 @@ namespace Randomizer.CLI.Verbs {
                 throw new ArgumentOutOfRangeException("players", "The players parameter must fall within the range 1-64");
 
             if (options.AutoIPS == true) {
-                if (options.MysterySeed == true)
-                    throw new ArgumentException("Must set --autoips=true with --mysteryseed");
                 if (String.IsNullOrEmpty(options.AutoIPSPath) || !Directory.Exists(options.AutoIPSPath))
                     throw new DirectoryNotFoundException("--autoipspath must be set when using --autoips");
 
@@ -498,6 +496,8 @@ namespace Randomizer.CLI.Verbs {
                 if (options.Loop != 1)
                     throw new ArgumentException("AutoIPS does not currently work with the Loop option; use shell looping instead.");
             } else if (options.AutoIPS == false) {
+                if (options.MysterySeed == true)
+                    throw new ArgumentException("Must set --autoips=true with --mysteryseed");
                 if (options.Ips.Count() == 0)
                     throw new ArgumentException("Must either set --ips <file> or --autoips");
             }
