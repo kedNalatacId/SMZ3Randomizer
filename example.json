@@ -1,0 +1,87 @@
+{
+    // This file includes JSON comments, which usually don't work
+    // You must edit this file (or make your own)
+    // More options will be added over time as more of the code is combed through
+
+    // The seed to use; generally shouldn't be used here, use it on cli with --seed=<seed>
+    "Seed": "",
+
+    // path to your Super Metroid File
+    "smFile": ".\Super_Metroid_JU_.sfc",
+
+    // path to your Zelda File
+    "z3File": ".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc",
+
+    // where to write the output file; for the moment needs to include a name
+    // can include the full path
+    "OutputFile": "D:\seed",
+
+    // Spoiler includes the playthrough, so only one works at a time
+    "Playthrough": true,
+    "Spoiler": false,
+
+    // Some self-evident options
+    "Race": false,   // whether this is a race or not (default is false)
+    "Rom": true,     // whether to create a rom or not (default is false)
+    "Players": 1,    // number of players
+    "Multi": false,  // multi-world
+    "GoFast": false, // puts boots/speed booster early
+
+    "BottleContents": "Randomized" // whether to have empty or random content bottles
+    "BossDrops": "Randomized"      // randomized or "non-dungeon"
+    "RandomFlyingTiles": false,    // whether to choose a random number of tiles or not
+
+    // Any IPS or RDC files you want to include
+    "IPS": [ "one", "two", "three" ],
+    "RDC": [ "four", "five", "size" ],
+
+    // AutoIPS is used when making mystery seeds as dungeon item dialogs get turned on and off, etc
+    // This should NOT be used in production (if that's not obvious)
+    "AutoIPS": true,
+
+    // The path to your checkout of alltp_sm_combo_randomizer_rom
+    "AutoIPSPath": "../alltp_sm_combo_randomizer_rom",
+
+    // A default config to use when building via build.py for AutoIPS
+    "AutoIPSConfig": "../alltp_sm_combo_randomizer_rom/autoips.conf",
+
+    // Output patches to console instead of to files
+    "ToConsole": false,
+
+    // How many seeds to make, defaults to 1
+    // zero or negative numbers both mean "infinite"
+    "Loop": 1,
+
+    // Chooses random sprites and customization options, including heart color, heart beep, etc
+    "SurpriseMe": false,
+
+    // Used with SurpriseMe, the path to sprite files (RDCs)
+    "RdcPath": "/tmp",
+
+    // Sword and Morph Location; other options are "Early" and "Randomized" (default is Randomized)
+    "SwordLocation": "Uncle",
+    "MorphLocation": "Original",
+
+    // This flag does two things (defaults to false):
+    //  1. removes the forced skull woods small key in the pinball room
+    //      you may have to S&Q out
+    //  2. removes forced sphere zero supers/powers
+    //      you may have to go through early metroid with only 5 PBs
+    //      makes routing more interesting/difficult
+    "LiveDangerously": false,
+
+    // Whether to use Progressive Bow or not; currently broken, shouldn't be used
+    "ProgressiveBow": false,
+
+    // What level of KeyShuffle/Keycards to use
+    // Choosing Keysanity for KeyShuffle will make Keycards be "Keysanity" by default
+    // otherwise they are independent and can be chosen separately
+    "KeyShuffle": "Keysanity",
+    "Keycards": "Randomized",
+
+    // When building Super Metroid seeds (WARNING: UNTESTED!); whether to do full or split randomization
+    "Placement": "Split",
+
+    // Not currently used, reserved for future
+    "Goal": "DefeatBoth"
+}

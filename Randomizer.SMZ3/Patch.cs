@@ -570,7 +570,7 @@ namespace Randomizer.SMZ3 {
             patches.AddRange(allWorlds.Select(world => (0x385000 + (world.Id * 16), PlayerNameBytes(world.Player))));
 
             // Write myWorld.Player name to local save file while we're here; TODO -- make better
-            // possibly import ALTTPRs extended file select screen?
+            //   possibly import ALTTPRs extended file select screen?
             patches.Add((Snes(0x5e03fa), FileSelectPlayerNameBytes(myWorld.Player)));
             if (myWorld.Player.Length > 4) {
                 patches.Add((Snes(0x5e08fa), FileSelectPlayerNameBytes(myWorld.Player[4..])));

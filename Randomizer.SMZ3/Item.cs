@@ -404,12 +404,15 @@ namespace Randomizer.SMZ3 {
                 new Item(MoonPearl),
 
                 new Item(Grapple),
+                new Item(Charge),
                 new Item(Ice),
                 new Item(Wave),
+                new Item(Plasma),
                 new Item(Varia),
                 new Item(Gravity),
                 new Item(Morph),
                 new Item(Bombs),
+                new Item(SpringBall),
                 new Item(ScrewAttack),
                 new Item(HiJump),
                 new Item(SpaceJump),
@@ -453,10 +456,7 @@ namespace Randomizer.SMZ3 {
                 new Item(HalfMagic),
                 new Item(Bugnet),
 
-                new Item(SpringBall),
-                new Item(Charge),
                 new Item(Spazer),
-                new Item(Plasma),
             };
 
             if (!cnf.ProgressiveBow) {
