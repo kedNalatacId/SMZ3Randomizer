@@ -27,18 +27,30 @@ These are presented in no particular order.
 - "Medium" Zelda logic
     - more akin to "advanced item placement" from ALTTPR
     - includes dark rooms and fake flippers (+ a little)
-    - likely to be rmeoved or changed when zelda logic comes in
+    - likely to be removed or changed when zelda logic comes in
 - "Hard" Zelda logic
-    - more or less unimpleneted; likely to be removed with 11.2 later
-- Mystery mode
+    - more or less unimpleneted; likely to be removed
+- MysterySeed mode
     - randomizes difficulty of logic
     - randomizes morph and sword location (original, early, or random)
         - 5% chance each of original or early; 90% chance of random
     - randomizes bottle content (random or empty; usually random)
+        - 20% chance of "Empty"; 80% chance of "Randomized"
     - randomizes gofast or not (low chance, see below)
+        - 10% chance
     - randomizes to live dangerously or not (high chance; see below)
+        - 70% chance
     - randomizes which level of keyshuffle/keycard to use (see below)
     - randomizes number of flying tiles (see below)
+        - 80% chance
+    - randomizes boss drops between "non-dungeon" and "random"
+        - 80% chance of "Randomized"
+    - randomized chance of progressive bow
+        - currently disabled; hopefully soon
+        - not sure what percentages will be yet
+    - reserved for future:
+        - randomizes goal
+        - randomizes ganon invincible
 - BossDrops can be either random or non-dungeon
 - Random Bottle content is implemented
     - also: bottles are moved behind the first progressive bottle
