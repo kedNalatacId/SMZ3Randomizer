@@ -142,16 +142,6 @@ namespace Randomizer.SMZ3 {
                 var inventory = CollectItems(assumedItems.Concat(baseItems), worlds);
                 var location = locations.Empty().CanFillWithinWorld(item, inventory).FirstOrDefault();
 
-                // WIP -- remove when progbow works in SM
-                if (item.Type == ItemType.ProgressiveBow && location.Region is SMRegion) {
-                    assumedItems.Add(item);
-                    if (++fail_counter > locations.Empty().Count()) {
-                        throw new CannotFillWorldException("Cannot fill world (progbow)");
-                    }
-                    continue;
-                }
-                // ENDWIP
-
                 if (location == null) {
                     assumedItems.Add(item);
                     if (++fail_counter > locations.Empty().Count()) {

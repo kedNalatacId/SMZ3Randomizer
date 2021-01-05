@@ -366,6 +366,7 @@ namespace Randomizer.CLI.Verbs {
             opts.Playthrough ??= conf.Playthrough ?? (bool)opts.defaults["Playthrough"];
             opts.Spoiler ??= conf.Spoiler ?? (bool)opts.defaults["Spoiler"];
             opts.Patch ??= conf.Patch ?? (bool)opts.defaults["Patch"];
+            opts.GoFast ??= conf.GoFast ?? (bool)opts.defaults["GoFast"];
 
             if (String.IsNullOrEmpty(opts.SMLogic))
                 opts.SMLogic = !String.IsNullOrEmpty(conf.SMLogic) ? conf.SMLogic : (string)opts.defaults["SMLogic"];
