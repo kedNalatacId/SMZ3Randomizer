@@ -14,6 +14,7 @@ namespace Randomizer.CLI.Verbs {
         public Dictionary<string, object> defaults { get; set; } = new Dictionary<string, object>() {
             { "ConfigFile", @".\seed_options.json" },
 
+            { "AsarBin", "asar" },
             { "AutoIPS", false },
             { "AutoIPSConfig", "autoips.conf" },
             { "AutoIPSPath", "/tmp" },
@@ -27,6 +28,7 @@ namespace Randomizer.CLI.Verbs {
             { "PlayerName", "Player-1" },
             { "Players", 1 },
             { "Playthrough", false },
+            { "PythonBin", "python" },
             { "SMLogic", "Normal" },
             { "smFile", @".\Super_Metroid_JU_.sfc" },
             { "Spoiler", false },
@@ -107,6 +109,14 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Path to alttp_sm_combo_randomizer_rom checked out repo with build.py")]
         public string AutoIPSPath { get; set; }
 
+        [Option("asar",
+            HelpText = "Path to asar executable; used with autoips. Possibly obviates the need for autoipsconfig")]
+        public string AsarBin { get; set; }
+
+        [Option("python",
+            HelpText = "Name/Path to python executable; used with autoips. Defaults to 'python'")]
+        public string PythonBin { get; set; }
+
         [Option(
             HelpText = "Specify paths for RDC resources to be applied in the specified order.")]
         public IEnumerable<string> Rdc { get; set; }
@@ -180,9 +190,9 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "SM Morph Ball Location (default is Randomized)")]
         public string MorphLocation { get; set; }
 
-        [Option("bow",
-            HelpText = "Separate Bow and Silvers, or Progressive (default is Separate)")]
-        public string Bow { get; set; }
+        [Option("progressivebow",
+            HelpText = "Separate Bow and Silvers, or Progressive (default is false)")]
+        public bool? ProgressiveBow { get; set; }
 
         [Option('g',"goal",
             HelpText = "Goal of Seed (default is DefeatBoth)")]
@@ -219,7 +229,7 @@ namespace Randomizer.CLI.Verbs {
         public SMZ3SeedOptions() {
             defaults.Add("BossDrops", "Randomized");
             defaults.Add("BottleContents", "Empty");
-            defaults.Add("Bow", "Separate");
+            defaults.Add("ProgressiveBow", false);
             defaults.Add("GanonInvincible", "Never");
             defaults.Add("Goal", "DefeatBoth");
             defaults.Add("Keycards", "None");
@@ -379,6 +389,9 @@ namespace Randomizer.CLI.Verbs {
             if (String.IsNullOrEmpty(opts.PlayerName))
                 opts.PlayerName = !String.IsNullOrEmpty(conf.PlayerName) ? conf.PlayerName : (string)opts.defaults["PlayerName"];
 
+            if (String.IsNullOrEmpty(opts.AsarBin))
+                opts.AsarBin = !String.IsNullOrEmpty(conf.AsarBin) ? conf.AsarBin : (string)opts.defaults["AsarBin"];
+
             if (String.IsNullOrEmpty(opts.AutoIPSConfig))
                 opts.AutoIPSConfig = !String.IsNullOrEmpty(conf.AutoIPSConfig) ? conf.AutoIPSConfig : (string)opts.defaults["AutoIPSConfig"];
 
@@ -390,6 +403,9 @@ namespace Randomizer.CLI.Verbs {
 
             if (String.IsNullOrEmpty(opts.OutputFile))
                 opts.OutputFile = !String.IsNullOrEmpty(conf.OutputFile) ? conf.OutputFile : (string)opts.defaults["OutputFile"];
+
+            if (String.IsNullOrEmpty(opts.PythonBin))
+                opts.PythonBin = !String.IsNullOrEmpty(conf.PythonBin) ? conf.PythonBin : (string)opts.defaults["PythonBin"];
 
             if (String.IsNullOrEmpty(opts.smFile))
                 opts.smFile = !String.IsNullOrEmpty(conf.smFile) ? conf.smFile : (string)opts.defaults["smFile"];
@@ -425,9 +441,6 @@ namespace Randomizer.CLI.Verbs {
                     if (String.IsNullOrEmpty(smz3.MorphLocation))
                         smz3.MorphLocation = !String.IsNullOrEmpty(smz3conf.MorphLocation) ? smz3conf.MorphLocation : (string)smz3.defaults["MorphLocation"];
 
-                    if (String.IsNullOrEmpty(smz3.Bow))
-                        smz3.Bow = !String.IsNullOrEmpty(smz3conf.Bow) ? smz3conf.Bow : (string)smz3.defaults["Bow"];
-
                     if (String.IsNullOrEmpty(smz3.KeyShuffle))
                         smz3.KeyShuffle = !String.IsNullOrEmpty(smz3conf.KeyShuffle) ? smz3conf.KeyShuffle : (string)smz3.defaults["KeyShuffle"];
 
@@ -446,6 +459,7 @@ namespace Randomizer.CLI.Verbs {
                     if (String.IsNullOrEmpty(smz3.z3File))
                         smz3.z3File = !String.IsNullOrEmpty(smz3conf.z3File) ? smz3conf.z3File : (string)smz3.defaults["z3File"];
 
+                    smz3.ProgressiveBow ??= smz3conf.ProgressiveBow ?? (bool)smz3.defaults["ProgressiveBow"];
                     smz3.LiveDangerously ??= smz3conf.LiveDangerously ?? (bool)smz3.defaults["LiveDangerously"];
                     smz3.RandomFlyingTiles ??= smz3conf.RandomFlyingTiles ?? (bool)smz3.defaults["RandomFlyingTiles"];
                 }
@@ -455,12 +469,12 @@ namespace Randomizer.CLI.Verbs {
                     ("bottlecontents", smz3.BottleContents),
                     ("swordlocation", smz3.SwordLocation),
                     ("morphlocation", smz3.MorphLocation),
-                    ("progressivebow", smz3.Bow == "Progressive" ? "true" : "false"),
                     ("keyshuffle", smz3.KeyShuffle),
                     ("keycards", smz3.Keycards),
                     ("bossdrops", smz3.BossDrops),
                     ("ganoninvincible", smz3.GanonInvincible),
                     ("goal", smz3.Goal),
+                    ("progressivebow", smz3.ProgressiveBow.ToString()),
                     ("livedangerously", smz3.LiveDangerously.ToString()),
                     ("randomflyingtiles", smz3.RandomFlyingTiles.ToString()),
                 });
@@ -489,8 +503,10 @@ namespace Randomizer.CLI.Verbs {
                 throw new ArgumentOutOfRangeException("players", "The players parameter must fall within the range 1-64");
 
             if (options.AutoIPS == true) {
-                if (String.IsNullOrEmpty(options.AutoIPSPath) || !Directory.Exists(options.AutoIPSPath))
-                    throw new DirectoryNotFoundException("--autoipspath must be set when using --autoips");
+                if (String.IsNullOrEmpty(options.AutoIPSPath))
+                    throw new ArgumentException("--autoipspath must be set when using --autoips");
+                if (!Directory.Exists(options.AutoIPSPath))
+                    throw new DirectoryNotFoundException($"Could not find --auotipspath {options.AutoIPSPath}");
 
                 // WIP -- have to figure why looping with autoips is creating broken seeds
                 // Until then, don't allow both
@@ -573,6 +589,8 @@ namespace Randomizer.CLI.Verbs {
             var ips_file = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
 
             string ips_opts = $"build.py --config {opts.AutoIPSConfig} --output {ips_file}";
+            if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
+                ips_opts += $" --asar {opts.AsarBin}";
             if ((bool)opts.SurpriseMe)
                 ips_opts += " --surprise_me";
 
@@ -608,7 +626,7 @@ namespace Randomizer.CLI.Verbs {
             Directory.SetCurrentDirectory(opts.AutoIPSPath);
 
             using (Process p = new Process()) {
-                p.StartInfo.FileName = "python3";
+                p.StartInfo.FileName = opts.PythonBin;
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.Arguments = ips_opts;
 
@@ -650,10 +668,22 @@ namespace Randomizer.CLI.Verbs {
 
         static string ComposeFilename(IRandomizer rando, GenSeedOptions opts, string seed, string player) {
             var parts = new[] { new string[] {} };
+            string dir  = "";
+            string name = "";
 
             if (!String.IsNullOrEmpty(opts.OutputFile)) {
+                // If they set to just a directory (regardless of trailing slash)
+                if (Directory.Exists(opts.OutputFile)) {
+                    dir = opts.OutputFile;
+                } else {
+                    dir  = Path.GetDirectoryName(opts.OutputFile);
+                    name = Path.GetFileName(opts.OutputFile);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(name)) {
                 parts = new[] {
-                    new[] { opts.OutputFile },
+                    new[] { name },
                     new[] {
                         seed,
                         (bool)opts.Multi ? player : null,
@@ -683,7 +713,7 @@ namespace Randomizer.CLI.Verbs {
             }
 
             /* Flatten, then keep non-null parts */
-            return string.Join("-", parts.SelectMany(x => x).Where(x => x != null));
+            return Path.Combine(dir, string.Join("-", parts.SelectMany(x => x).Where(x => x != null)));
         }
 
         public class PatchWriteConverter : JsonConverter<IDictionary<int, byte[]>> {

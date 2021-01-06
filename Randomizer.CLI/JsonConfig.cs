@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 
 namespace Randomizer.CLI {
     public abstract class BaseConfig {
+        public string AsarBin { get; set; }
         public bool? AutoIPS { get; set; }
         public string AutoIPSConfig { get; set; }
         public string AutoIPSPath { get; set; }
@@ -18,6 +19,7 @@ namespace Randomizer.CLI {
         public string PlayerName { get; set; }
         public int Players { get; set; }
         public bool? Playthrough { get; set; }
+        public string PythonBin { get; set; }
         public bool? Race { get; set; }
         public string[] Rdc { get; set; }
         public string RdcPath { get; set; }
@@ -49,7 +51,7 @@ namespace Randomizer.CLI {
     public class SMZ3Config : BaseConfig {
         public string BossDrops { get; set; }
         public string BottleContents { get; set; }
-        public string Bow { get; set; }
+        public bool? ProgressiveBow { get; set; }
         public string GanonInvincible { get; set; }
         public string Keycards { get; set; }
         public string KeyShuffle { get; set; }

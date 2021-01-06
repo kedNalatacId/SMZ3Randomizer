@@ -12,9 +12,19 @@
     // path to your Zelda File
     "z3File": ".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc",
 
-    // where to write the output file; for the moment needs to include a name
-    // can include the full path
-    "OutputFile": "D:\seed",
+    // Mystery mode -- chooses logic, keysanity modes, sword and morph locations for you (randomly)
+    // Any such that are specified here or elsewhere will be ignored.
+    "MysterySeed": true,
+
+    // What difficuly logic to use for SM and Z3
+    "SMLogic": "Hard",
+    "Z3Logic": "Normal",
+
+    // where to write the output file; anything past the last slash
+    // will be interpreted as part of the filename
+    //
+    // trailing slash is not necessary... if the full path is a directory, it will be used as such
+    "OutputFile": "D:\Users\test\data\seed",
 
     // Spoiler includes the playthrough, so only one works at a time
     "Playthrough": true,
@@ -27,8 +37,8 @@
     "Multi": false,  // multi-world
     "GoFast": false, // puts boots/speed booster early
 
-    "BottleContents": "Randomized" // whether to have empty or random content bottles
-    "BossDrops": "Randomized"      // randomized or "non-dungeon"
+    "BottleContents": "Randomized", // whether to have empty or random content bottles
+    "BossDrops": "Randomized",      // randomized or "non-dungeon"
     "RandomFlyingTiles": false,    // whether to choose a random number of tiles or not
 
     // Any IPS or RDC files you want to include
@@ -43,6 +53,7 @@
     "AutoIPSPath": "../alltp_sm_combo_randomizer_rom",
 
     // A default config to use when building via build.py for AutoIPS
+    // in particular: a good place to set where your asar.exe is located
     "AutoIPSConfig": "../alltp_sm_combo_randomizer_rom/autoips.conf",
 
     // Output patches to console instead of to files
@@ -56,7 +67,7 @@
     "SurpriseMe": false,
 
     // Used with SurpriseMe, the path to sprite files (RDCs)
-    "RdcPath": "/tmp",
+    "RdcPath": "../WebRandomizer/ClientApp/public/sprites",
 
     // Sword and Morph Location; other options are "Early" and "Randomized" (default is Randomized)
     "SwordLocation": "Uncle",
@@ -78,10 +89,4 @@
     // otherwise they are independent and can be chosen separately
     "KeyShuffle": "Keysanity",
     "Keycards": "Randomized",
-
-    // When building Super Metroid seeds (WARNING: UNTESTED!); whether to do full or split randomization
-    "Placement": "Split",
-
-    // Not currently used, reserved for future
-    "Goal": "DefeatBoth"
 }
