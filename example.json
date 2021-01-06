@@ -6,6 +6,9 @@
     // The seed to use; generally shouldn't be used here, use it on cli with --seed=<seed>
     "Seed": "",
 
+    // Your name here (currently only four characters will show, sorry)
+    "PlayerName": "test",
+
     // path to your Super Metroid File
     "smFile": ".\Super_Metroid_JU_.sfc",
 
@@ -88,5 +91,5 @@
     // Choosing Keysanity for KeyShuffle will make Keycards be "Keysanity" by default
     // otherwise they are independent and can be chosen separately
     "KeyShuffle": "Keysanity",
-    "Keycards": "Randomized",
+    "Keycards": "Randomized"
 }
