@@ -69,7 +69,7 @@ namespace Randomizer.CLI {
         }
     }
 
-    // The below are Used for parsing Mike Trethewey's sprite data
+    // The below are Used for parsing sprite inventory data
     public class SpriteEntry {
         public string name { get; set; }
         public string author { get; set; }
