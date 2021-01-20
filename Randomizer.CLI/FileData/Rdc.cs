@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -108,6 +111,129 @@ namespace Randomizer.CLI.FileData {
             return writer.ToArray();
         }
 
+        // online utilities for retrieving community sprites as per new guidelines
+
+        public static IEnumerable<string> GetRandomSprites(Dictionary<string, string> opts) {
+            IEnumerable<string> sprites = new List<string> {};
+            Random tmp_rnd = new Random();
+
+            SpriteInventory inventory = null;
+            try {
+                inventory = GetSpriteList(opts["SpriteURL"], opts["SpriteCachePath"]);
+            } catch (Exception) { }
+
+            Regex onlineSprite = new Regex("^http");
+
+            // 20% chance of OG Samus
+            if (tmp_rnd.Next(100) <= 80) {
+                string smSprite = GetRandomSamusSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
+                if (onlineSprite.IsMatch(smSprite)) {
+                    smSprite = ConvertSprite("sm", smSprite, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
+                }
+                sprites = sprites.Concat(new string[] { smSprite });
+            }
+
+            // 20% chance of OG Link
+            if (tmp_rnd.Next(100) <= 80) {
+                string z3Sprite = GetRandomZeldaSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
+                if (onlineSprite.IsMatch(z3Sprite)) {
+                    z3Sprite = ConvertSprite("z3", z3Sprite, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
+                }
+                sprites = sprites.Concat(new string[] { z3Sprite });
+            }
+
+            return sprites;
+        }
+
+        public static SpriteInventory GetSpriteList(string SpriteURL, string SpriteCachePath) {
+            SpriteInventory inventory = null;
+            string inventoryFile = Path.Combine(SpriteCachePath, "sprite_inventory.json");
+
+            // check if we already have the inventory and it's recent (within a day)
+            if (!File.Exists(inventoryFile) || File.GetLastWriteTime(inventoryFile) < DateTime.Now.AddDays(-1)) {
+Console.WriteLine("File less than a day old.... downloading again (go fix it :(");
+Environment.Exit(0);
+                string candidate = "";
+
+                // We have to download the inventory, it's older than a day
+                using (WebClient wc = new WebClient()) {
+                    candidate = wc.DownloadString(SpriteURL);
+                }
+
+                File.WriteAllText(inventoryFile, candidate);
+            }
+
+            using (StreamReader r = File.OpenText(inventoryFile)) {
+                string json = r.ReadToEnd();
+                try {
+                    inventory = JsonConvert.DeserializeObject<SpriteInventory>(json);
+                } catch (Exception e) {
+                    Console.WriteLine("Failed importing JSON:");
+                    Console.WriteLine(JsonConvert.SerializeObject(e, Formatting.Indented));
+                    Environment.Exit(0);
+                }
+            }
+
+            return inventory;
+        }
+
+        public static string ConvertSprite(string game, string SpriteURL, string SpriteCachePath, string SpriteSomethingBin, string PythonBin) {
+            string spriteExt = Path.GetExtension(SpriteURL);
+            string tmpSpriteFile =  Path.Join(Path.GetTempPath(), Path.GetRandomFileName() + spriteExt);
+            string spriteFile = Path.Combine(SpriteCachePath, game, Path.GetFileNameWithoutExtension(SpriteURL)) + ".rdc";
+            string SpriteSomethingDir = Path.GetDirectoryName(SpriteSomethingBin);
+
+            // If we've already downloaded this, don't re-download
+            if (File.Exists(spriteFile))
+                return spriteFile;
+
+            using (WebClient wc = new WebClient()) {
+                wc.DownloadFile(SpriteURL, tmpSpriteFile);
+            }
+
+            using (Process p = new Process()) {
+                p.StartInfo.FileName = PythonBin;
+                p.StartInfo.WorkingDirectory = SpriteSomethingDir;
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.Arguments = $" {SpriteSomethingBin} --cli yes --mode=export --export-filename={spriteFile} --sprite={tmpSpriteFile}";
+
+                p.Start();
+                p.WaitForExit();
+            }
+
+            File.Delete(tmpSpriteFile);
+            return spriteFile;
+        }
+
+        public static string GetRandomSamusSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+            string[] sm_sprites = null;
+            Random tmp_rnd = new Random();
+
+            // try online first
+            if (inventory != null) {
+                sm_sprites = inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3")).Select(x => x.Value.file).ToArray();
+            } else {
+                sm_sprites = Directory.GetFiles(Path.Combine(SpriteCachePath, "sm"), "*.rdc*");
+            }
+
+            sm_sprites = sm_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
+            return sm_sprites[tmp_rnd.Next(sm_sprites.Length)];
+        }
+
+        public static string GetRandomZeldaSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+            string[] z3_sprites = null;
+            Random tmp_rnd = new Random();
+
+            // try online first
+            if (inventory != null) {
+                z3_sprites = inventory.z3.approved.Where(x => x.Value.usage.Contains("smz3")).Select(x => x.Value.file).ToArray();
+            } else {
+                z3_sprites = Directory.GetFiles(Path.Combine(SpriteCachePath, "z3"), "*.rdc*");
+            }
+
+            z3_sprites = z3_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
+            return z3_sprites[tmp_rnd.Next(z3_sprites.Length)];
+        }
     }
 
     interface BlockType {

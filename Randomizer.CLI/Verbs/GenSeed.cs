@@ -20,6 +20,7 @@ namespace Randomizer.CLI.Verbs {
             { "AutoIPSPath", "/tmp" },
             { "GoFast", false },
             { "Ips", new List<string> {} },
+            { "Keycards", "None" },
             { "Loop", 1 },
             { "Multi", false },
             { "MysterySeed", false },
@@ -34,12 +35,16 @@ namespace Randomizer.CLI.Verbs {
             { "Spoiler", false },
             { "SurpriseMe", false },
             { "Race", false },
-            { "Rdc", new List<string> {} },
-            { "RdcPath", "" },
+            { "Sprites", new List<string> {} },
             { "Rom", false },
             { "Seed", "" },
+            { "SpriteCachePath", "/tmp" },
+            { "SpriteSomethingBin", "SpriteSomething.py" },
+            { "AvoidSprites", new List<string> {} },
+            { "SpriteURL", "http://smalttpr.mymm1.com/sprites/" },
             { "ToConsole", false },
             { "Verbose", 0 },
+            { "z3File", @".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc" },
         };
 
         [Option('c', "config", HelpText = "Options Config File")]
@@ -113,17 +118,33 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Path to asar executable; used with autoips. Possibly obviates the need for autoipsconfig")]
         public string AsarBin { get; set; }
 
+        [Option("keycards",
+            HelpText = "Whether to use KeyCards with Keysanity or not (default is None)")]
+        public string Keycards { get; set; }
+
         [Option("python",
             HelpText = "Name/Path to python executable; used with autoips. Defaults to 'python'")]
         public string PythonBin { get; set; }
 
         [Option(
             HelpText = "Specify paths for RDC resources to be applied in the specified order.")]
-        public IEnumerable<string> Rdc { get; set; }
+        public IEnumerable<string> Sprites { get; set; }
 
-        [Option("rdcpath",
-            HelpText = "Path to Sprite files (RDCs) used for the surprise me option")]
-        public string RdcPath { get; set; }
+        [Option("spritecachepath",
+            HelpText = "Where to store downloaded sprites temporarily")]
+        public string SpriteCachePath { get; set; }
+
+        [Option("spritesomething",
+            HelpText = "Where the SpriteSomething repo is checked out")]
+        public string SpriteSomethingBin { get; set; }
+
+        [Option("avoidsprites",
+            HelpText = "Sprites you don't want to see in --surpriseme mode; one list works for both SM and Z3")]
+        public IEnumerable<string> AvoidSprites { get; set; }
+
+        [Option("spriteurl",
+            HelpText = "Mike Trethewey's available Sprite list; work from approved smz3 sprites only!")]
+        public string SpriteURL { get; set; }
 
         [Option('t', "terminal",
             HelpText = "Write patch and playthrough/spoiler to the console instead of directly to files")]
@@ -144,6 +165,10 @@ namespace Randomizer.CLI.Verbs {
         [Option("smfile",
             HelpText = "Super Metroid ROM File")]
         public string smFile { get; set; }
+
+        [Option("z3file",
+            HelpText = "Zelda: ALTTP ROM File")]
+        public string z3File { get; set; }
 
         [Option('v', "verbose",
             HelpText = "Verbosity level; defaults to 0 (off)")]
@@ -202,10 +227,6 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "What level of key shuffle to use (default is None)")]
         public string KeyShuffle { get; set; }
 
-        [Option("keycards",
-            HelpText = "Whether to use KeyCards with Keysanity or not (default is None)")]
-        public string Keycards { get; set; }
-
         [Option("bossdrops",
             HelpText = "Whether to allow bosses to drop dungeon items (default is Randomized)")]
         public string BossDrops { get; set; }
@@ -215,16 +236,12 @@ namespace Randomizer.CLI.Verbs {
         public string GanonInvincible { get; set; }
 
         [Option("livedangerously",
-            HelpText = "Whether to have the Forced Skull Woods key or not (defaults to having it)")]
+            HelpText = "Removes various first sphere items from all games")]
         public bool? LiveDangerously { get; set; }
 
         [Option("randomflyingtiles",
             HelpText = "Whether the number of flying tiles in tile rooms should be random or not (default true currently)")]
         public bool? RandomFlyingTiles { get; set; }
-
-        [Option("z3file",
-            HelpText = "Zelda: ALTTP ROM File")]
-        public string z3File { get; set; }
 
         public SMZ3SeedOptions() {
             defaults.Add("BossDrops", "Randomized");
@@ -232,13 +249,11 @@ namespace Randomizer.CLI.Verbs {
             defaults.Add("ProgressiveBow", false);
             defaults.Add("GanonInvincible", "Never");
             defaults.Add("Goal", "DefeatBoth");
-            defaults.Add("Keycards", "None");
             defaults.Add("KeyShuffle", "None");
             defaults.Add("LiveDangerously", false);
             defaults.Add("MorphLocation", "Randomized");
             defaults.Add("RandomFlyingTiles", false);
             defaults.Add("SwordLocation", "Randomized");
-            defaults.Add("z3File", @".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc");
             defaults.Add("Z3Logic", "Normal");
         }
 
@@ -312,7 +327,7 @@ namespace Randomizer.CLI.Verbs {
                     Rom.ApplySeed(rom, world.Patches);
 
                     AdditionalPatches(rom, (bool)opts.AutoIPS ? opts.Ips : opts.Ips.Skip(1));
-                    ApplyRdcResources(rom, (bool)opts.SurpriseMe ? GetRandomSprites(opts) : opts.Rdc);
+                    ApplyRdcResources(rom, (bool)opts.SurpriseMe ? Rdc.GetRandomSprites(options) : opts.Sprites);
 
                     File.WriteAllBytes($"{filename}.sfc", rom);
 
@@ -355,13 +370,9 @@ namespace Randomizer.CLI.Verbs {
 
         // ugly, but does what i want... might revert to simpler version that wasn't quite right
         public static List<(string, string)> getOptions(GenSeedOptions opts) {
-            BaseConfig conf = null;
+            JsonConfig conf = null;
             if (!String.IsNullOrEmpty(opts.ConfigFile) && File.Exists(opts.ConfigFile)) {
-                if (opts is SMSeedOptions smconf) {
-                    conf = SMConfig.ParseConfig(smconf.ConfigFile);
-                } else if (opts is SMZ3SeedOptions smz3conf) {
-                    conf = SMZ3Config.ParseConfig(smz3conf.ConfigFile);
-                }
+                conf = JsonConfig.ParseConfig(opts.ConfigFile);
             }
 
             // Coalesce options into opts while we're here; this is technically a side-effect
@@ -379,7 +390,8 @@ namespace Randomizer.CLI.Verbs {
             opts.GoFast ??= conf.GoFast ?? (bool)opts.defaults["GoFast"];
 
             if (String.IsNullOrEmpty(opts.SMLogic))
-                opts.SMLogic = !String.IsNullOrEmpty(conf.SMLogic) ? conf.SMLogic : (string)opts.defaults["SMLogic"];
+                opts.SMLogic = !String.IsNullOrEmpty(conf.Metroid.SMLogic) ? conf.Metroid.SMLogic : (string)opts.defaults["SMLogic"];
+
             if (opts.Players == 0)
                 opts.Players = conf.Players > 0 ? conf.Players : (int)opts.defaults["Players"];
 
@@ -398,8 +410,17 @@ namespace Randomizer.CLI.Verbs {
             if (String.IsNullOrEmpty(opts.AutoIPSPath))
                 opts.AutoIPSPath = !String.IsNullOrEmpty(conf.AutoIPSPath) ? conf.AutoIPSPath : (string)opts.defaults["AutoIPSConfig"];
 
-            if (String.IsNullOrEmpty(opts.RdcPath))
-                opts.RdcPath = !String.IsNullOrEmpty(conf.RdcPath) ? conf.RdcPath : (string)opts.defaults["RdcPath"];
+            if (String.IsNullOrEmpty(opts.Keycards))
+                opts.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)opts.defaults["Keycards"];
+
+            if (String.IsNullOrEmpty(opts.SpriteURL))
+                opts.SpriteURL = !String.IsNullOrEmpty(conf.SpriteURL) ? conf.SpriteURL : (string)opts.defaults["SpriteURL"];
+
+            if (String.IsNullOrEmpty(opts.SpriteCachePath))
+                opts.SpriteCachePath = !String.IsNullOrEmpty(conf.SpriteCachePath) ? conf.SpriteCachePath : (string)opts.defaults["SpriteCachePath"];
+
+            if (String.IsNullOrEmpty(opts.SpriteSomethingBin))
+                opts.SpriteSomethingBin = !String.IsNullOrEmpty(conf.SpriteSomethingBin) ? conf.SpriteSomethingBin : (string)opts.defaults["SpriteSomethingBin"];
 
             if (String.IsNullOrEmpty(opts.OutputFile))
                 opts.OutputFile = !String.IsNullOrEmpty(conf.OutputFile) ? conf.OutputFile : (string)opts.defaults["OutputFile"];
@@ -408,10 +429,15 @@ namespace Randomizer.CLI.Verbs {
                 opts.PythonBin = !String.IsNullOrEmpty(conf.PythonBin) ? conf.PythonBin : (string)opts.defaults["PythonBin"];
 
             if (String.IsNullOrEmpty(opts.smFile))
-                opts.smFile = !String.IsNullOrEmpty(conf.smFile) ? conf.smFile : (string)opts.defaults["smFile"];
+                opts.smFile = !String.IsNullOrEmpty(conf.Metroid.smFile) ? conf.Metroid.smFile : (string)opts.defaults["smFile"];
 
-            if (opts.Rdc.Count() == 0)
-                opts.Rdc = conf.Rdc != null && conf.Rdc.Length > 0 ? conf.Rdc.ToList() : (List<string>)opts.defaults["Rdc"];
+            if (String.IsNullOrEmpty(opts.z3File))
+                opts.z3File = !String.IsNullOrEmpty(conf.Zelda.z3File) ? conf.Zelda.z3File : (string)opts.defaults["z3File"];
+
+            if (opts.Sprites.Count() == 0)
+                opts.Sprites = conf.Sprites != null && conf.Sprites.Length > 0 ? conf.Sprites.ToList() : (List<string>)opts.defaults["Sprites"];
+            if (opts.AvoidSprites.Count() == 0)
+                opts.AvoidSprites = conf.AvoidSprites != null && conf.AvoidSprites.Length > 0 ? conf.AvoidSprites.ToList() : (List<string>)opts.defaults["AvoidSprites"];
             if (opts.Ips.Count() == 0)
                 opts.Ips = conf.Ips != null && conf.Ips.Length > 0 ? conf.Ips.ToList() : (List<string>)opts.defaults["Ips"];
 
@@ -420,49 +446,49 @@ namespace Randomizer.CLI.Verbs {
                 ("gofast", opts.GoFast.ToString()),
                 ("mysteryseed", opts.MysterySeed.ToString()),
                 ("surpriseme", opts.SurpriseMe.ToString()),
+                ("keycards", opts.Keycards),
                 ("players", opts.Players.ToString()),
                 ("playername", opts.PlayerName),
                 ("race", opts.Race.ToString()),
                 ("smlogic", opts.SMLogic),
                 ("loop", opts.Loop.ToString()),
+
+                // These options are passed this way when getting a random sprite (easier)
+                ("SpriteURL", opts.SpriteURL),
+                ("SpriteCachePath", opts.SpriteCachePath),
+                ("SpriteSomethingBin", opts.SpriteSomethingBin),
+                ("AvoidSprites", String.Join(',', opts.AvoidSprites)),
+                ("PythonBin", opts.PythonBin),
             };
 
             if (opts is SMZ3SeedOptions smz3) {
-                if (conf is SMZ3Config smz3conf) {
-                    if (String.IsNullOrEmpty(smz3.Z3Logic))
-                        smz3.Z3Logic = !String.IsNullOrEmpty(smz3conf.Z3Logic) ? smz3conf.Z3Logic : (string)smz3.defaults["Z3Logic"];
+                if (String.IsNullOrEmpty(smz3.Z3Logic))
+                    smz3.Z3Logic = !String.IsNullOrEmpty(conf.Zelda.Z3Logic) ? conf.Zelda.Z3Logic : (string)smz3.defaults["Z3Logic"];
 
-                    if (String.IsNullOrEmpty(smz3.BottleContents))
-                        smz3.BottleContents = !String.IsNullOrEmpty(smz3conf.BottleContents) ? smz3conf.BottleContents : (string)smz3.defaults["BottleContents"];
+                if (String.IsNullOrEmpty(smz3.BottleContents))
+                    smz3.BottleContents = !String.IsNullOrEmpty(conf.Zelda.BottleContents) ? conf.Zelda.BottleContents : (string)smz3.defaults["BottleContents"];
 
-                    if (String.IsNullOrEmpty(smz3.SwordLocation))
-                        smz3.SwordLocation = !String.IsNullOrEmpty(smz3conf.SwordLocation) ? smz3conf.SwordLocation : (string)smz3.defaults["SwordLocation"];
+                if (String.IsNullOrEmpty(smz3.SwordLocation))
+                    smz3.SwordLocation = !String.IsNullOrEmpty(conf.Zelda.SwordLocation) ? conf.Zelda.SwordLocation : (string)smz3.defaults["SwordLocation"];
 
-                    if (String.IsNullOrEmpty(smz3.MorphLocation))
-                        smz3.MorphLocation = !String.IsNullOrEmpty(smz3conf.MorphLocation) ? smz3conf.MorphLocation : (string)smz3.defaults["MorphLocation"];
+                if (String.IsNullOrEmpty(smz3.MorphLocation))
+                    smz3.MorphLocation = !String.IsNullOrEmpty(conf.Zelda.MorphLocation) ? conf.Zelda.MorphLocation : (string)smz3.defaults["MorphLocation"];
 
-                    if (String.IsNullOrEmpty(smz3.KeyShuffle))
-                        smz3.KeyShuffle = !String.IsNullOrEmpty(smz3conf.KeyShuffle) ? smz3conf.KeyShuffle : (string)smz3.defaults["KeyShuffle"];
+                if (String.IsNullOrEmpty(smz3.KeyShuffle))
+                    smz3.KeyShuffle = !String.IsNullOrEmpty(conf.Zelda.KeyShuffle) ? conf.Zelda.KeyShuffle : (string)smz3.defaults["KeyShuffle"];
 
-                    if (String.IsNullOrEmpty(smz3.Keycards))
-                        smz3.Keycards = !String.IsNullOrEmpty(smz3conf.Keycards) ? smz3conf.Keycards : (string)smz3.defaults["Keycards"];
+                if (String.IsNullOrEmpty(smz3.BossDrops))
+                    smz3.BossDrops = !String.IsNullOrEmpty(conf.Zelda.BossDrops) ? conf.Zelda.BossDrops : (string)smz3.defaults["BossDrops"];
 
-                    if (String.IsNullOrEmpty(smz3.BossDrops))
-                        smz3.BossDrops = !String.IsNullOrEmpty(smz3conf.BossDrops) ? smz3conf.BossDrops : (string)smz3.defaults["BossDrops"];
+                if (String.IsNullOrEmpty(smz3.GanonInvincible))
+                    smz3.GanonInvincible = !String.IsNullOrEmpty(conf.Zelda.GanonInvincible) ? conf.Zelda.GanonInvincible : (string)smz3.defaults["GanonInvincible"];
 
-                    if (String.IsNullOrEmpty(smz3.GanonInvincible))
-                        smz3.GanonInvincible = !String.IsNullOrEmpty(smz3conf.GanonInvincible) ? smz3conf.GanonInvincible : (string)smz3.defaults["GanonInvincible"];
+                if (String.IsNullOrEmpty(smz3.Goal))
+                    smz3.Goal = !String.IsNullOrEmpty(conf.Goal) ? conf.Goal : (string)smz3.defaults["Goal"];
 
-                    if (String.IsNullOrEmpty(smz3.Goal))
-                        smz3.Goal = !String.IsNullOrEmpty(smz3conf.Goal) ? smz3conf.Goal : (string)smz3.defaults["Goal"];
-
-                    if (String.IsNullOrEmpty(smz3.z3File))
-                        smz3.z3File = !String.IsNullOrEmpty(smz3conf.z3File) ? smz3conf.z3File : (string)smz3.defaults["z3File"];
-
-                    smz3.ProgressiveBow ??= smz3conf.ProgressiveBow ?? (bool)smz3.defaults["ProgressiveBow"];
-                    smz3.LiveDangerously ??= smz3conf.LiveDangerously ?? (bool)smz3.defaults["LiveDangerously"];
-                    smz3.RandomFlyingTiles ??= smz3conf.RandomFlyingTiles ?? (bool)smz3.defaults["RandomFlyingTiles"];
-                }
+                smz3.ProgressiveBow ??= conf.Zelda.ProgressiveBow ?? (bool)smz3.defaults["ProgressiveBow"];
+                smz3.LiveDangerously ??= conf.LiveDangerously ?? (bool)smz3.defaults["LiveDangerously"];
+                smz3.RandomFlyingTiles ??= conf.Zelda.RandomFlyingTiles ?? (bool)smz3.defaults["RandomFlyingTiles"];
 
                 optionList.AddRange(new[] {
                     ("z3logic", smz3.Z3Logic),
@@ -470,7 +496,6 @@ namespace Randomizer.CLI.Verbs {
                     ("swordlocation", smz3.SwordLocation),
                     ("morphlocation", smz3.MorphLocation),
                     ("keyshuffle", smz3.KeyShuffle),
-                    ("keycards", smz3.Keycards),
                     ("bossdrops", smz3.BossDrops),
                     ("ganoninvincible", smz3.GanonInvincible),
                     ("goal", smz3.Goal),
@@ -481,13 +506,11 @@ namespace Randomizer.CLI.Verbs {
             }
 
             if (opts is SMSeedOptions sm) {
-                if (conf is SMConfig smconf) {
-                    if (String.IsNullOrEmpty(sm.Placement))
-                        sm.Placement = !String.IsNullOrEmpty(smconf.Placement) ? smconf.Placement : (string)opts.defaults["Placement"];
+                if (String.IsNullOrEmpty(sm.Placement))
+                    sm.Placement = !String.IsNullOrEmpty(conf.Metroid.Placement) ? conf.Metroid.Placement : (string)sm.defaults["Placement"];
 
-                    if (String.IsNullOrEmpty(sm.Goal))
-                        sm.Goal = !String.IsNullOrEmpty(smconf.Goal) ? smconf.Goal : (string)opts.defaults["Goal"];
-                }
+                if (String.IsNullOrEmpty(sm.Goal))
+                    sm.Goal = !String.IsNullOrEmpty(conf.Goal) ? conf.Goal : (string)sm.defaults["Goal"];
 
                 optionList.AddRange(new[] {
                     ("placement", sm.Placement),
@@ -527,7 +550,7 @@ namespace Randomizer.CLI.Verbs {
             if ((bool)options.Playthrough && (bool)options.Spoiler)
                 throw new ArgumentException("Playthrough and Spoiler are mutually exclusive.");
 
-            foreach (var r in options.Rdc) {
+            foreach (var r in options.Sprites) {
                 if (!File.Exists(r))
                     throw new ArgumentException($"RDC File {r} doesn't exist.");
             }
@@ -535,10 +558,8 @@ namespace Randomizer.CLI.Verbs {
             if (String.IsNullOrEmpty(options.smFile) || !File.Exists(options.smFile))
                 throw new FileNotFoundException($"Could not find Super Metroid file: {options.smFile}");
 
-            if (options is SMZ3SeedOptions smz3) {
-                if (String.IsNullOrEmpty(smz3.z3File) || !File.Exists(smz3.z3File))
-                    throw new FileNotFoundException($"Could not find Zelda file: {smz3.z3File}");
-            }
+            if (String.IsNullOrEmpty(options.z3File) || !File.Exists(options.z3File))
+                throw new FileNotFoundException($"Could not find Zelda file: {options.z3File}");
         }
 
         static void AdditionalPatches(byte[] rom, IEnumerable<string> ips) {
@@ -546,32 +567,6 @@ namespace Randomizer.CLI.Verbs {
                 using var stream = OpenReadInnerStream(patch);
                 Rom.ApplyIps(rom, stream);
             }
-        }
-
-        private static IEnumerable<string> GetRandomSprites(GenSeedOptions opts) {
-            // personal preference... i don't want to be the below sprites by chance
-            // currently using a single blacklist instead of two separate ones
-            string[] blacklist = new string[] {
-                "grandpoobear", "pug", "eggplant", "vegeta", "poppy", "bailey"
-            };
-            Random tmp_rnd = new Random();
-            IEnumerable<string> sprites = new List<string> {};
-
-            // 20% chance of OG Samus
-            if (tmp_rnd.Next(100) <= 80) {
-                string[] sm_sprites = Directory.GetFiles(Path.Combine(opts.RdcPath, "sm"), "*.rdc*");
-                sm_sprites = sm_sprites.Where(i => !blacklist.Any(e => i.Contains(e))).ToArray();
-                sprites = sprites.Concat(new string[] { sm_sprites[tmp_rnd.Next(sm_sprites.Length)] });
-            }
-
-            // 20% chance of OG Link
-            if (tmp_rnd.Next(100) <= 80) {
-                string[] z3_sprites = Directory.GetFiles(Path.Combine(opts.RdcPath, "z3"), "*.rdc*");
-                z3_sprites = z3_sprites.Where(i => !blacklist.Any(e => i.Contains(e))).ToArray();
-                sprites = sprites.Concat(new string[] { z3_sprites[tmp_rnd.Next(z3_sprites.Length)] });
-            }
-
-            return sprites;
         }
 
         static void ApplyRdcResources(byte[] rom, IEnumerable<string> rdc) {
@@ -588,11 +583,13 @@ namespace Randomizer.CLI.Verbs {
         private static string ConstructBaseIps(IRandomizer randomizer, GenSeedOptions opts) {
             var ips_file = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
 
-            string ips_opts = $"build.py --config {opts.AutoIPSConfig} --output {ips_file}";
+            string ips_opts = $"build.py --config {opts.AutoIPSConfig} --output {ips_file} --no-cleanup";
             if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
                 ips_opts += $" --asar {opts.AsarBin}";
             if ((bool)opts.SurpriseMe)
                 ips_opts += " --surprise_me";
+            if (opts is SMSeedOptions)
+                ips_opts += " --mode sm";
 
             // The value can be "randomized", so we have to determine what was chosen
             // This allows us to turn on and off keycards based on the seeds chosen values!
@@ -643,25 +640,16 @@ namespace Randomizer.CLI.Verbs {
                 return;
 
             Lazy<byte[]> fullRom;
-            if (opts is SMSeedOptions sm) {
-                fullRom = new Lazy<byte[]>(() => {
-                    using var ips = OpenReadInnerStream(base_ips);
-                    var rom = File.ReadAllBytes(opts.smFile);
-                    FileData.Rom.ApplyIps(rom, ips);
-                    return rom;
-                });
-            } else if (opts is SMZ3SeedOptions smz3) {
-                fullRom = new Lazy<byte[]>(() => {
-                    using var sm = File.OpenRead(opts.smFile);
-                    using var z3 = File.OpenRead(smz3.z3File);
-                    using var ips = OpenReadInnerStream(base_ips);
-                    var rom = FileData.Rom.CombineSMZ3Rom(sm, z3);
-                    FileData.Rom.ApplyIps(rom, ips);
-                    return rom;
-                });
-            } else {
-                throw new ArgumentException("Only Seed Modes available are 'sm' and 'smz3'");
-            }
+            fullRom = new Lazy<byte[]>(() => {
+                // WIP -- do this for all modes
+                using var sm = File.OpenRead(opts.smFile);
+                using var z3 = File.OpenRead(opts.z3File);
+                var rom = FileData.Rom.CombineSMZ3Rom(sm, z3);
+                // ENDWIP
+                using var ips = OpenReadInnerStream(base_ips);
+                FileData.Rom.ApplyIps(rom, ips);
+                return rom;
+            });
 
             opts.BaseRom = (byte[]) fullRom.Value.Clone();
         }
