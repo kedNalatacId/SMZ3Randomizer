@@ -13,10 +13,8 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
         public Kraid(World world, Config config) : base(world, config) {
             RegionItems = new[] { CardNorfairL1, CardNorfairL2 };
             Locations = new List<Location> {
-                new Location(this, 43, 0x8F899C, LocationType.Hidden, "Energy Tank, Kraid",
-                    items => items.CardBrinstarBoss),
-                new Location(this, 48, 0x8F8ACA, LocationType.Chozo, "Varia Suit",
-                    items => items.CardBrinstarBoss),
+                new Location(this, 43, 0x8F899C, LocationType.Hidden, "Energy Tank, Kraid", items => items.CardBrinstarBoss),
+                new Location(this, 48, 0x8F8ACA, LocationType.Chozo, "Varia Suit", items => items.CardBrinstarBoss),
                 new Location(this, 44, 0x8F89EC, LocationType.Hidden, "Missile (Kraid)", Logic switch {
                     _ => new Requirement(items => items.CanUsePowerBombs())
                 }),
@@ -31,7 +29,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
         public bool CanComplete(Progression items) {
             return Locations.Get("Varia Suit").Available(items);
         }
-
     }
-
 }

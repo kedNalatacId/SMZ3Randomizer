@@ -13,14 +13,14 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
             RegionItems = new[] { CardLowerNorfairL1, CardNorfairL2, CardNorfairBoss };
             Locations = new List<Location> {
                 new Location(this, 50, 0x8F8B24, LocationType.Chozo, "Ice Beam", Logic switch {
-                    Normal => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
-                    Medium => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanPassBombPassages() && (items.Varia || items.HasEnergyReserves(6)),
-                    _ => new Requirement(items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.Morph && (items.Varia || items.HasEnergyReserves(3)))
+                    Normal => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
+                    Medium => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && (items.Varia || items.HasEnergyReserves(5)),
+                    _ => new Requirement(items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.Morph && (items.Varia || items.HasEnergyReserves(3)))
                 }),
                 new Location(this, 51, 0x8F8B46, LocationType.Hidden, "Missile (below Ice Beam)", Logic switch {
-                    Normal => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanUsePowerBombs() && items.Varia && items.SpeedBooster,
-                    Medium => items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanUsePowerBombs() && (items.Varia || items.HasEnergyReserves(6)),
-                    _ => new Requirement(items => ((config.UseKeycards && items.CardNorfairL1) || (!config.UseKeycards && items.Super)) && items.CanUsePowerBombs() &&
+                    Normal => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
+                    Medium => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && (items.Varia || items.HasEnergyReserves(5)),
+                    _ => new Requirement(items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() &&
                         (items.Varia || items.HasEnergyReserves(3)) ||
                         items.Varia && items.SpeedBooster && items.Super && items.CardNorfairL1)
                 }),
@@ -40,7 +40,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
             return (items.CanDestroyBombWalls() || items.SpeedBooster) && items.Super && items.Morph ||
                 items.CanAccessNorfairUpperPortal();
         }
-
     }
-
 }

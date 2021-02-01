@@ -14,6 +14,7 @@ namespace Randomizer.SMZ3 {
         [Description("Nothing")] 
         Nothing,
 
+        [Description("Hyrule Castle Map")]
         MapHC = 0x7F,
         [Description("Eastern Palace Map")]
         MapEP = 0x7D,
@@ -421,6 +422,7 @@ namespace Randomizer.SMZ3 {
                 new Item(Missile),
                 new Item(Super),
                 new Item(PowerBomb),
+                new Item(PowerBomb),
                 new Item(ETank),
                 new Item(ETank),
                 new Item(ETank),
@@ -433,6 +435,10 @@ namespace Randomizer.SMZ3 {
                 new Item(ReserveTank),
             };
 
+            if (cnf.Z3Logic == Z3Logic.Normal) {
+                itemPool.AddRange(Copies(3, () => new Item(ProgressiveShield, world)));
+            }
+
             foreach (var item in itemPool) {
                 item.Progression = true;
                 item.World = world;
@@ -443,9 +449,6 @@ namespace Randomizer.SMZ3 {
 
         public static List<Item> CreateNicePool(World world, Config cnf, Random Rnd) {
             var itemPool = new List<Item> {
-                new Item(ProgressiveShield),
-                new Item(ProgressiveShield),
-                new Item(ProgressiveShield),
                 new Item(ProgressiveTunic),
                 new Item(ProgressiveTunic),
                 new Item(ProgressiveSword),
@@ -458,6 +461,11 @@ namespace Randomizer.SMZ3 {
 
                 new Item(Spazer),
             };
+
+            // Remove shield from progression pool for medium/hard modes
+            if (cnf.Z3Logic != Z3Logic.Normal) {
+                itemPool.AddRange(Copies(3, () => new Item(ProgressiveShield, world)));
+            }
 
             if (!cnf.ProgressiveBow) {
                 itemPool.AddRange(Copies(1, () => new Item(SilverArrows, world)));
@@ -491,7 +499,7 @@ namespace Randomizer.SMZ3 {
             itemPool.AddRange(Copies(2,  () => new Item(ReserveTank)));
             itemPool.AddRange(Copies(39, () => new Item(Missile)));
             itemPool.AddRange(Copies(15, () => new Item(Super)));
-            itemPool.AddRange(Copies(9,  () => new Item(PowerBomb)));
+            itemPool.AddRange(Copies(8,  () => new Item(PowerBomb)));
 
             foreach (var item in itemPool) item.World = world;
 

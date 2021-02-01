@@ -13,7 +13,8 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
             RegionItems = new[] { CardMaridiaL1, CardNorfairL1, CardBrinstarBoss };
             Locations = new List<Location> {
                 new Location(this, 38, 0x8F8876, LocationType.Chozo, "X-Ray Scope", Logic switch {
-                    Normal => items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && (items.Grapple || items.SpaceJump),
+                    Normal => items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && (items.Grapple || items.SpaceJump) &&
+                        (items.Varia || items.HasEnergyReserves(3)),
                     Medium => items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && (items.Grapple || items.SpaceJump),
                     _ => new Requirement(items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && (
                         items.Grapple || items.SpaceJump ||
@@ -49,7 +50,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                     items.CanAccessNorfairUpperPortal() && (items.Ice || items.CanSpringBallJump() || items.HiJump || items.CanFly())
             };
         }
-
     }
-
 }

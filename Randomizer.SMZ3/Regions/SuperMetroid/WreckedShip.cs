@@ -29,21 +29,20 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                         (items.Grapple || items.SpaceJump || items.Varia && items.HasEnergyReserves(2) || items.HasEnergyReserves(3)),
                     _ => new Requirement(items => CanUnlockShip(items) && items.CardWreckedShipL1 && (items.Varia || items.HasEnergyReserves(1)))
                 }),
-                new Location(this, 131, 0x8FC319, LocationType.Visible, "Missile (Wrecked Ship top)",
-                    items => CanUnlockShip(items)),
+                new Location(this, 131, 0x8FC319, LocationType.Visible, "Missile (Wrecked Ship top)", items => CanUnlockShip(items)),
                 new Location(this, 132, 0x8FC337, LocationType.Visible, "Energy Tank, Wrecked Ship", Logic switch {
                     Normal => items => CanUnlockShip(items) &&
                         (items.HiJump || items.SpaceJump || items.SpeedBooster || items.Gravity),
                     _ => new Requirement(items => CanUnlockShip(items) && (items.Bombs || items.PowerBomb || items.CanSpringBallJump() ||
                         items.HiJump || items.SpaceJump || items.SpeedBooster || items.Gravity))
                 }),
-                new Location(this, 133, 0x8FC357, LocationType.Visible, "Super Missile (Wrecked Ship left)",
-                    items => CanUnlockShip(items)),
-                new Location(this, 134, 0x8FC365, LocationType.Visible, "Right Super, Wrecked Ship",
-                    items => CanUnlockShip(items)),
+                new Location(this, 133, 0x8FC357, LocationType.Visible, "Super Missile (Wrecked Ship left)", items => CanUnlockShip(items)),
+                new Location(this, 134, 0x8FC365, LocationType.Visible, "Right Super, Wrecked Ship", items => CanUnlockShip(items)),
                 new Location(this, 135, 0x8FC36D, LocationType.Chozo, "Gravity Suit", Logic switch {
                     Normal => items => CanUnlockShip(items) && items.CardWreckedShipL1 &&
                         (items.Grapple || items.SpaceJump || items.Varia && items.HasEnergyReserves(2) || items.HasEnergyReserves(3)),
+                    Medium => items => CanUnlockShip(items) && items.CardWreckedShipL1 &&
+                        (items.Grapple || items.SpaceJump || items.Varia && items.HasEnergyReserves(1) || items.HasEnergyReserves(2)),
                     _ => new Requirement(items => CanUnlockShip(items) && items.CardWreckedShipL1 && (items.Varia || items.HasEnergyReserves(1)))
                 })
             };
@@ -57,9 +56,13 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
             return Logic switch {
                 Normal =>
                     items.Super && (
-                        ((Config.UseKeycards && items.CardCrateriaL2) || (!Config.UseKeycards && items.CanUsePowerBombs())) && (
-                            items.SpeedBooster || items.Grapple || items.SpaceJump || items.Gravity
+                        /* Over the Moat */
+                        (Config.Keysanity ? items.CardCrateriaL2 : items.CanUsePowerBombs()) && (
+                            items.Grapple || items.SpaceJump || (items.Gravity && items.CanIbj())
                         ) ||
+                        /* Through Maridia -> Forgotten Highway */
+                        items.CanUsePowerBombs() && items.Gravity ||
+                        /* From Maridia portal -> Forgotten Highway */
                         items.CanAccessMaridiaPortal(World) && items.Gravity && items.CardMaridiaL2 && (
                             items.CanDestroyBombWalls() ||
                             World.Locations.Get("Space Jump").Available(items)
@@ -67,18 +70,29 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                     ),
                 Medium =>
                     items.Super && (
-                        ((Config.UseKeycards && items.CardCrateriaL2) || (!Config.UseKeycards && items.CanUsePowerBombs())) && (
+                        /* Over the Moat */
+                        (Config.Keysanity ? items.CardCrateriaL2 : items.CanUsePowerBombs()) && (
                             items.SpeedBooster || items.Grapple || items.SpaceJump || items.Gravity
                         ) ||
-                        items.CanAccessMaridiaPortal(World) && items.Gravity && items.CardMaridiaL2 && (
-                            items.CanDestroyBombWalls() ||
+                        /* Through Maridia -> Forgotten Highway */
+                        items.CanUsePowerBombs() && items.Gravity ||
+                        /* From Maridia portal -> Forgotten Highway */
+                        items.CanAccessMaridiaPortal(World) && items.Gravity && (
+                            items.CanDestroyBombWalls() && items.CardMaridiaL2 ||
                             World.Locations.Get("Space Jump").Available(items)
                         )
                     ),
                 _ =>
                     items.Super && (
-                        ((Config.UseKeycards && items.CardCrateriaL2) || (!Config.UseKeycards && items.CanUsePowerBombs())) ||
-                        items.CanAccessMaridiaPortal(World) && ( 
+                        /* Over the Moat */
+                        (Config.UseKeycards ? items.CardCrateriaL2 : items.CanUsePowerBombs()) ||
+                        /* Through Maridia -> Forgotten Highway */
+                        items.CanUsePowerBombs() && (
+                            items.Gravity ||
+                            /* Climb Mt. Everest */
+                            items.HiJump && (items.Ice || items.CanSpringBallJump()) && items.Grapple && items.CardMaridiaL1
+                        ) ||
+                        items.CanAccessMaridiaPortal(World) && (
                             items.HiJump && items.CanPassBombPassages() && items.CardMaridiaL2 ||
                             items.Gravity && (
                                 items.CanDestroyBombWalls() && items.CardMaridiaL2 ||
@@ -92,7 +106,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
         public bool CanComplete(Progression items) {
             return CanEnter(items) && CanUnlockShip(items);
         }
-
     }
-
 }

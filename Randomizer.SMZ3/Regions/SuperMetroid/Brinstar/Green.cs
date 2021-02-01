@@ -18,9 +18,12 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                 new Location(this, 13, 0x8F84AC, LocationType.Chozo, "Power Bomb (green Brinstar bottom)", Logic switch {
                     _ => new Requirement(items => items.CardBrinstarL2 && items.CanUsePowerBombs())
                 }),
+                // morph can be here if you already have access to bombs
+                // 
                 new Location(this, 15, 0x8F8518, LocationType.Visible, "Missile (green Brinstar below super missile)", Logic switch {
-                    _ => new Requirement(items => items.CanPassBombPassages() && items.CanOpenRedDoors())
-                }),
+                    Hard => items => items.CanOpenRedDoors(),
+                    _ => new Requirement(items => items.CanOpenRedDoors() && items.CanPassBombPassages()),
+                }).AlwaysAllow((item, items) => item.Is(Morph, World) && (items.Bombs || items.PowerBomb)),
                 new Location(this, 16, 0x8F851E, LocationType.Visible, "Super Missile (green Brinstar top)", Logic switch {
                     Normal => items => items.CanOpenRedDoors() && items.SpeedBooster,
                     _ => new Requirement(items => items.CanOpenRedDoors() && (items.Morph || items.SpeedBooster))
@@ -53,7 +56,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                 _ => items.CanDestroyBombWalls() || items.SpeedBooster
             };
         }
-
     }
-
 }

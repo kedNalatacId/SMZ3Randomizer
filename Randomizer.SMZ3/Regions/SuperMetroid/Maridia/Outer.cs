@@ -13,12 +13,11 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Maridia {
             RegionItems = new[] { CardMaridiaL1 };
             Locations = new List<Location> {
                 new Location(this, 136, 0x8FC437, LocationType.Visible, "Missile (green Maridia shinespark)", Logic switch {
-                    Normal => items => items.SpeedBooster,
                     _ => new Requirement(items => items.Gravity && items.SpeedBooster)
                 }),
                 new Location(this, 137, 0x8FC43D, LocationType.Visible, "Super Missile (green Maridia)"),
                 new Location(this, 138, 0x8FC47D, LocationType.Visible, "Energy Tank, Mama turtle", Logic switch {
-                    Normal => items => items.CanOpenRedDoors() && (items.CanFly() || items.SpeedBooster || items.Grapple),
+                    Normal => items => items.Gravity && items.CanOpenRedDoors() && (items.SpaceJump || items.SpeedBooster || items.Grapple),
                     Medium => items => items.Gravity && items.CanOpenRedDoors() && (items.CanFly() || items.SpeedBooster || items.Grapple),
                     _ => new Requirement(items => items.CanOpenRedDoors() && (
                         items.CanFly() || items.SpeedBooster || items.Grapple ||
@@ -47,7 +46,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Maridia {
                     )
             };
         }
-
     }
-
 }

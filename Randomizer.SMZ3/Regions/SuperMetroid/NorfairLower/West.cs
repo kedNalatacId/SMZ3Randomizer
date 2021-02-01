@@ -11,13 +11,17 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
 
         public West(World world, Config config) : base(world, config) {
             RegionItems = new[] { CardLowerNorfairBoss };
+
             Locations = new List<Location> {
                 new Location(this, 70, 0x8F8E6E, LocationType.Visible, "Missile (Gold Torizo)",
                     Logic switch {
                         Normal => items => items.CanUsePowerBombs() && items.SpaceJump && items.Super,
                         _ => new Requirement(items => items.CanUsePowerBombs() && items.SpaceJump && items.Varia && (
                             items.HiJump || items.Gravity ||
-                            items.CanAccessNorfairLowerPortal() && (items.CanFly() || items.CanSpringBallJump() || items.SpeedBooster) && items.Super))
+                            items.CanAccessNorfairLowerPortal() && items.Super &&
+                                (items.CanFly() || items.CanSpringBallJump() || items.SpeedBooster)
+                            )
+                        )
                     }
                 ),
                 new Location(this, 71, 0x8F8E74, LocationType.Hidden, "Super Missile (Gold Torizo)", Logic switch {
@@ -49,7 +53,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
                     items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls()
             };
         }
-
     }
-
 }

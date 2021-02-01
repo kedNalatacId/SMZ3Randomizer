@@ -785,7 +785,7 @@ namespace Randomizer.SMZ3 {
         }
 
         void WriteFlyingTiles() {
-            byte tiles = (byte)(rnd.Next(21) + 1);
+            byte tiles = (byte)(rnd.Next(20) + 1);
             patches.Add((Snes(0x49BA1D), new byte[] { tiles }));
         }
 

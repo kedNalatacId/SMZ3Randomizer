@@ -13,9 +13,10 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
 
         public East(World world, Config config) : base(world, config) {
             RegionItems = new[] { CardLowerNorfairBoss };
+
             Locations = new List<Location> {
                 new Location(this, 73, 0x8F8F30, LocationType.Visible, "Missile (Mickey Mouse room)", Logic switch {
-                    _ => new Requirement(items => items.Morph && items.CanDestroyBombWalls())
+                    _ => new Requirement(items => CanExit(items) && items.Morph && items.CanDestroyBombWalls()),
                 }),
                 new Location(this, 74, 0x8F8FCA, LocationType.Visible, "Missile (lower Norfair above fire flea room)", Logic switch {
                     _ => new Requirement(items => CanExit(items) && items.CardLowerNorfairL1)
@@ -40,11 +41,31 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
             };
         }
 
-        private bool CanExit(Progression items) {
-            return Logic switch
-            {
-                Normal => !Config.UseKeycards || (items.CardNorfairL2 || items.Wave && items.Gravity),
-                _ => true
+        bool CanExit(Progression items) {
+            return CanExitThroughNorfair(items) || CanExitThroughPortal(items);
+        }
+
+        bool CanExitThroughNorfair(Progression items) {
+            return Logic switch {
+                Normal =>
+                    /* Varia and Gravity for Reverse Lava Dive if missing LN-1 card */
+                    (items.CardLowerNorfairL1 || items.Gravity) && items.CardNorfairL2 ||
+                    items.Gravity && items.Wave /* Blue Gate */ && items.SpeedBooster,
+                _ =>
+                    items.CardNorfairL2 ||
+                    /* Without UN-2 we need to check for Morph due to Reverse Amphitheater */
+                    items.Morph && (items.Missile || items.Super || items.Wave /* Blue Gate */) && items.SpeedBooster,
+            };
+        }
+
+        // Todo: no guarantee of PBs on Hard can block green gate by falling at Mickey Mouse (but "solved" through PB front fill)
+        bool CanExitThroughPortal(Progression items) {
+            return Logic switch {
+                /* Through Acid Statue Room, then fight GT */
+                Normal => items.CanUsePowerBombs() && items.SpaceJump && (items.Super || items.Charge),
+                _ => /* GGG directly back to the LN portal */
+                    items.Super /* Green Gate */ ||
+                    items.CanUsePowerBombs() && items.SpaceJump && (items.Super || items.Charge),
             };
         }
 
@@ -53,11 +74,13 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
                 Normal =>
                     items.Varia && (
                         World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.SpaceJump && items.Gravity ||
-                        items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls() && items.Super && items.CanUsePowerBombs() && items.CanFly()),
+                        items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls() && items.Super && items.CanUsePowerBombs() && items.CanFly()
+                    ),
                 Medium =>
                     items.Varia && (
                         World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && items.SpaceJump && items.Gravity ||
-                        items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls() && items.Super && items.CanUsePowerBombs() && items.CanFly()),
+                        items.CanAccessNorfairLowerPortal() && items.CanDestroyBombWalls() && items.Super && items.CanUsePowerBombs() && items.CanFly()
+                    ),
                 _ =>
                     items.Varia && (
                         World.CanEnter("Norfair Upper East", items) && items.CanUsePowerBombs() && (items.HiJump || items.Gravity) ||
@@ -72,7 +95,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
         public bool CanComplete(Progression items) {
             return Locations.Get("Energy Tank, Ridley").Available(items);
         }
-
     }
-
 }

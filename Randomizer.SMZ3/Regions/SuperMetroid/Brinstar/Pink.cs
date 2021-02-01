@@ -19,15 +19,17 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                     Normal => items => items.CardBrinstarBoss && items.CanPassBombPassages() && items.Super,
                     _ => new Requirement(items => (items.CardBrinstarBoss || items.CardBrinstarL2) && items.CanPassBombPassages() && items.Super)
                 }),
-                new Location(this, 21, 0x8F8608, LocationType.Visible, "Missile (pink Brinstar top)"),
+                new Location(this, 21, 0x8F8608, LocationType.Visible, "Missile (pink Brinstar top)", Logic switch {
+                    Normal => items => items.CanFly() || items.Grapple,
+                    _ => items => true,
+                }),
                 new Location(this, 22, 0x8F860E, LocationType.Visible, "Missile (pink Brinstar bottom)"),
                 new Location(this, 23, 0x8F8614, LocationType.Chozo, "Charge Beam", Logic switch {
                     _ => new Requirement(items => items.CanPassBombPassages())
                 }),
                 new Location(this, 24, 0x8F865C, LocationType.Visible, "Power Bomb (pink Brinstar)", Logic switch {
-                    Normal => items => items.CanUsePowerBombs() && items.Super && items.HasEnergyReserves(1),
-                    Medium => items => items.CanUsePowerBombs() && items.Super && items.HasEnergyReserves(1),
-                    _ => new Requirement(items => items.CanUsePowerBombs() && items.Super)
+                    Hard => items => items.CanUsePowerBombs() && items.Super,
+                    _ => new Requirement(items => items.CanUsePowerBombs() && items.Super && items.HasEnergyReserves(1)),
                 }),
                 new Location(this, 25, 0x8F8676, LocationType.Visible, "Missile (green Brinstar pipe)", Logic switch {
                     Hard => new Requirement(items => items.Morph && (items.PowerBomb || items.Super || items.CanAccessNorfairUpperPortal())),
@@ -65,7 +67,5 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
                         (items.Ice || items.HiJump || items.CanSpringBallJump() || items.CanFly()))
             };
         }
-
     }
-
 }

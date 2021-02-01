@@ -13,7 +13,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
             RegionItems = new[] { CardCrateriaBoss };
             Locations = new List<Location> {
                 new Location(this, 0, 0x8F81CC, LocationType.Visible, "Power Bomb (Crateria surface)", Logic switch {
-                    _ => new Requirement(items => ((config.UseKeycards && items.CardCrateriaL1) || (!config.UseKeycards && items.CanUsePowerBombs())) && (items.SpeedBooster || items.CanFly()))
+                    _ => new Requirement(items => (config.UseKeycards ? items.CardCrateriaL1 : items.CanUsePowerBombs()) && (items.SpeedBooster || items.CanFly()))
                 }),
                 new Location(this, 12, 0x8F8486, LocationType.Visible, "Missile (Crateria middle)", Logic switch {
                     _ => new Requirement(items => items.CanPassBombPassages())
@@ -21,16 +21,22 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
                 new Location(this, 6, 0x8F83EE, LocationType.Visible, "Missile (Crateria bottom)", Logic switch {
                     _ => new Requirement(items => items.CanDestroyBombWalls())
                 }),
+
+                // QoL: add Ice Beam to Normal; add either more ETanks or a viable exit strat
                 new Location(this, 11, 0x8F8478, LocationType.Visible, "Super Missile (Crateria)", Logic switch {
+                    Normal => items => items.CanUsePowerBombs() && items.SpeedBooster && items.Ice &&
+                        (items.HasEnergyReserves(4) || (items.HasEnergyReserves(3) && (items.Grapple || items.SpaceJump))),
+                    Medium => items => items.CanUsePowerBombs() && items.SpeedBooster &&
+                        (items.HasEnergyReserves(3) || (items.HasEnergyReserves(2) && (items.Grapple || items.SpaceJump))),
                     _ => new Requirement(items => items.CanUsePowerBombs() && items.HasEnergyReserves(2) && items.SpeedBooster)
                 }),
+
+                // Exiting wall jumps are hard only
                 new Location(this, 7, 0x8F8404, LocationType.Chozo, "Bombs", Logic switch {
-                    Normal => items => ((config.UseKeycards && items.CardCrateriaBoss) || (!config.UseKeycards && items.CanOpenRedDoors())) && items.CanPassBombPassages(),
-                    _ => new Requirement(items => ((config.UseKeycards && items.CardCrateriaBoss) || (!config.UseKeycards && items.CanOpenRedDoors())) && items.Morph)
+                    Hard => items => (config.UseKeycards ? items.CardCrateriaBoss : items.CanOpenRedDoors()) && items.Morph,
+                    _ => new Requirement(items => (config.UseKeycards ? items.CardCrateriaBoss : items.CanOpenRedDoors()) && items.CanPassBombPassages())
                 })
             };
         }
-
     }
-
 }
