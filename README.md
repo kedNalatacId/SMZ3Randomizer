@@ -33,6 +33,7 @@ some SMZ3 KeyShuffle/Keycard variants) then you'll need:
 If you want to use the SurpriseMe option (which is fun) then you'll need:
 * python3
 * SpriteSomething checked out locally
+    * This will require a "pip install numpy"
 * A local directory to cache the sprite inventory and downloaded sprites
 
 
