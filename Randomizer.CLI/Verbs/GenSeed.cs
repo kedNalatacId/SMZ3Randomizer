@@ -301,7 +301,7 @@ namespace Randomizer.CLI.Verbs {
                     data = rando.GenerateSeed(options, opts.Seed);
                     seed_made = true;
                 } catch (CannotFillWorldException) {
-                    if (++seed_fails > 9) {
+                    if (++seed_fails > 99) {
                         Console.WriteLine("Failed to create a seed too many times. Aborting.");
                         Environment.Exit(0);
                     }
