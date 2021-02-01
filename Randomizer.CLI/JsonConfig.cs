@@ -9,6 +9,7 @@ namespace Randomizer.CLI {
         public string Placement { get; set; }
         public string smFile { get; set; }
         public string SMLogic { get; set; }
+        public string MorphLocation { get; set; }
     }
 
     public class Z3Config {
@@ -17,7 +18,6 @@ namespace Randomizer.CLI {
         public bool? ProgressiveBow { get; set; }
         public string GanonInvincible { get; set; }
         public string KeyShuffle { get; set; }
-        public string MorphLocation { get; set; }
         public bool? RandomFlyingTiles { get; set; }
         public string SwordLocation { get; set; }
         public string Z3HeartColor { get; set; }
@@ -62,7 +62,12 @@ namespace Randomizer.CLI {
             JsonConfig conf = null;
             using (StreamReader r = File.OpenText(ConfigFile)) {
                 string json = r.ReadToEnd();
-                conf = JsonConvert.DeserializeObject<JsonConfig>(json);
+                try {
+                    conf = JsonConvert.DeserializeObject<JsonConfig>(json);
+                } catch (Exception e) {
+                    Console.WriteLine("Improper JSON config:");
+                    Console.WriteLine(JsonConvert.SerializeObject(e, Formatting.Indented));
+                }
             }
 
             return conf;

@@ -113,7 +113,8 @@ namespace Randomizer.CLI.FileData {
 
         // online utilities for retrieving community sprites as per new guidelines
 
-        public static IEnumerable<string> GetRandomSprites(Dictionary<string, string> opts) {
+        public static (string[], IEnumerable<string>) GetRandomSprites(Dictionary<string, string> opts) {
+            List<string> authors = new List<string>();
             IEnumerable<string> sprites = new List<string> {};
             Random tmp_rnd = new Random();
 
@@ -126,23 +127,25 @@ namespace Randomizer.CLI.FileData {
 
             // 20% chance of OG Samus
             if (tmp_rnd.Next(100) <= 80) {
-                string smSprite = GetRandomSamusSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
+                (string author, string smSprite) = GetRandomSamusSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
                 if (onlineSprite.IsMatch(smSprite)) {
                     smSprite = ConvertSprite("sm", smSprite, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
                 }
+                authors.Add(FormatAuthor(author));
                 sprites = sprites.Concat(new string[] { smSprite });
             }
 
             // 20% chance of OG Link
             if (tmp_rnd.Next(100) <= 80) {
-                string z3Sprite = GetRandomZeldaSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
+                (string author, string z3Sprite) = GetRandomLinkSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
                 if (onlineSprite.IsMatch(z3Sprite)) {
                     z3Sprite = ConvertSprite("z3", z3Sprite, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
                 }
+                authors.Add(FormatAuthor(author));
                 sprites = sprites.Concat(new string[] { z3Sprite });
             }
 
-            return sprites;
+            return (authors.ToArray(), sprites);
         }
 
         public static SpriteInventory GetSpriteList(string SpriteURL, string SpriteCachePath) {
@@ -151,14 +154,15 @@ namespace Randomizer.CLI.FileData {
 
             // check if we already have the inventory and it's recent (within a day)
             if (!File.Exists(inventoryFile) || File.GetLastWriteTime(inventoryFile) < DateTime.Now.AddDays(-1)) {
-Console.WriteLine("File less than a day old.... downloading again (go fix it :(");
-Environment.Exit(0);
                 string candidate = "";
 
                 // We have to download the inventory, it's older than a day
                 using (WebClient wc = new WebClient()) {
                     candidate = wc.DownloadString(SpriteURL);
                 }
+
+                // temporary: until Mike fixes the issues with the sprite list
+                candidate = massageSpriteList(candidate);
 
                 File.WriteAllText(inventoryFile, candidate);
             }
@@ -175,6 +179,15 @@ Environment.Exit(0);
             }
 
             return inventory;
+        }
+
+        // two current issues with the json:
+        // 1. some notes aren't arrays
+        // 2. the Metroid "denied" section is an array instead of a hash
+        public static string massageSpriteList(string spriteList) {
+            spriteList = Regex.Replace(spriteList, "note\": (\"[^\"]*\")", "note\": [ $1 ]");
+            spriteList = Regex.Replace(spriteList, "denied\": \\[]", "denied\": {}");
+            return spriteList;
         }
 
         public static string ConvertSprite(string game, string SpriteURL, string SpriteCachePath, string SpriteSomethingBin, string PythonBin) {
@@ -205,34 +218,57 @@ Environment.Exit(0);
             return spriteFile;
         }
 
-        public static string GetRandomSamusSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+        public static (string, string) GetRandomSamusSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+            string[] authors = null;
+            string author = "";
             string[] sm_sprites = null;
             Random tmp_rnd = new Random();
 
             // try online first
             if (inventory != null) {
+                authors = inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3")).Select(x => x.Value.author).ToArray();
                 sm_sprites = inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3")).Select(x => x.Value.file).ToArray();
             } else {
                 sm_sprites = Directory.GetFiles(Path.Combine(SpriteCachePath, "sm"), "*.rdc*");
             }
 
             sm_sprites = sm_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
-            return sm_sprites[tmp_rnd.Next(sm_sprites.Length)];
+
+            int chosen = tmp_rnd.Next(sm_sprites.Length);
+            if (authors != null && authors.Length >= chosen)
+                author = authors[chosen];
+            return (author, sm_sprites[chosen]);
         }
 
-        public static string GetRandomZeldaSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+        public static (string, string) GetRandomLinkSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+            string[] authors = null;
+            string author = "";
             string[] z3_sprites = null;
             Random tmp_rnd = new Random();
 
             // try online first
             if (inventory != null) {
+                authors = inventory.z3.approved.Where(x => x.Value.usage.Contains("smz3")).Select(x => x.Value.author).ToArray();
                 z3_sprites = inventory.z3.approved.Where(x => x.Value.usage.Contains("smz3")).Select(x => x.Value.file).ToArray();
             } else {
                 z3_sprites = Directory.GetFiles(Path.Combine(SpriteCachePath, "z3"), "*.rdc*");
             }
 
             z3_sprites = z3_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
-            return z3_sprites[tmp_rnd.Next(z3_sprites.Length)];
+
+            int chosen = tmp_rnd.Next(z3_sprites.Length);
+            if (authors != null && authors.Length >= chosen)
+                author = authors[chosen];
+            return (author, z3_sprites[chosen]);
+        }
+
+        // We'll have to check this on the backend, but check it here as well
+        public static string FormatAuthor(string author) {
+            author = Regex.Replace(author, @"[^\u0000-\u007F]+", string.Empty);
+            author = Regex.Replace(author, @"[ ]{2,}", " ");
+            if (author.Length > 30)
+                author = author.Substring(0, 30);
+            return author;
         }
     }
 

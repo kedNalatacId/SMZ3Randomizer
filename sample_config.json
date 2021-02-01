@@ -1,0 +1,46 @@
+{
+    "Metroid": {
+        "smFile": ".\Super_Metroid_JU_.sfc",
+        "SMLogic": "Hard",
+        "Keycards": "Randomized"
+        "MorphLocation": "Original",
+        "Placement": "Split",
+    },
+    "Zelda": {
+        "z3File": ".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc",
+        "BottleContents": "Randomized",
+        "BossDrops": "Randomized",
+        "RandomFlyingTiles": true,
+        "Z3Logic": "Normal",
+        "Z3HeartColor": "green",
+        "KeyShuffle": "Keysanity",
+        "SwordLocation": "Uncle",
+        "ProgressiveBow": false,
+    },
+
+    "MysterySeed": true,
+
+    "PlayerName": "test",
+    "OutputFile": "D:\Users\test\seeds",
+    "Playthrough": false,
+    "Spoiler": true,
+    "SurpriseMe": true,
+    "LiveDangerously": true,
+
+    "Race": false,
+    "Rom": true,
+    "Players": 1,
+    "Multi": false,
+    "GoFast": false,
+
+    "AutoIPS": true,
+    "AutoIPSPath": "D:\Users\test\alltp_sm_combo_randomizer_rom",
+    "AutoIPSConfig": "D:\Users\test\alltp_sm_combo_randomizer_rom\autoips.conf",
+    "AsarBin": "D:\Users\test\asar\asar\asar-standalone",
+    "PythonBin": "python",
+    "SpriteURL": "http://smalttpr.mymm1.com/sprites/",
+    "SpriteCachePath": "D:\Users\test\sprites",
+    "SpriteSomethingBin": "D:\Users\test\SpriteSomething\SpriteSomething.py",
+    "Sprites": [ "D:\Users\test\sprites\sm\dark_samus.2.sm.rdc.gz", "D:\Users\test\sprites\z3\toadette.2.rdc" ],
+    "AvoidSprites": [ "hitbox", "cursor" ]
+}

@@ -262,9 +262,10 @@ namespace Randomizer.CLI.Verbs {
 
     static class GenSeed {
         public static void Run(GenSeedOptions opts) {
-            var optionList = getOptions(opts);
+            List<(string, string)> optionList = null;
 
             try {
+                optionList = getOptions(opts);
                 validateOptions(opts);
             } catch (Exception e) {
                 Console.WriteLine("Failed to validate options:\n\t{0}", e.Message);
@@ -291,6 +292,7 @@ namespace Randomizer.CLI.Verbs {
             ISeedData data = null;
             IRandomizer rando = null;
             bool seed_made = false;
+            int seed_fails = 0;
 
             var start = DateTime.Now;
             while (seed_made == false) {
@@ -299,8 +301,10 @@ namespace Randomizer.CLI.Verbs {
                     data = rando.GenerateSeed(options, opts.Seed);
                     seed_made = true;
                 } catch (CannotFillWorldException) {
-                    // If we catch this, just try again
-                    // Console.WriteLine(e.Message);
+                    if (++seed_fails > 9) {
+                        Console.WriteLine("Failed to create a seed too many times. Aborting.");
+                        Environment.Exit(0);
+                    }
                 }
             }
 
@@ -317,17 +321,27 @@ namespace Randomizer.CLI.Verbs {
 
             if ((bool)opts.Rom) {
                 try {
+                    string[] authors = new string[2];
+                    IEnumerable<string> sprites = new List<string> {};
+
+                    // Get the sprites ahead of time so we can get the authors
+                    if ((bool)opts.SurpriseMe) {
+                        (authors, sprites) = Rdc.GetRandomSprites(options);
+                    } else {
+                        sprites = opts.Sprites;
+                    }
+
                     // The IPS file gets applied during writing,
                     // so it has to remain in context after ConstructRom is over.
                     // So we make it here, then delete it before leaving scope.
-                    string base_ips = (bool)opts.AutoIPS ? ConstructBaseIps(rando, opts) : opts.Ips.First();
+                    string base_ips = (bool)opts.AutoIPS ? ConstructBaseIps(rando, opts, authors) : opts.Ips.First();
 
                     ConstructRom(opts, base_ips);
                     var rom = opts.BaseRom;
                     Rom.ApplySeed(rom, world.Patches);
 
                     AdditionalPatches(rom, (bool)opts.AutoIPS ? opts.Ips : opts.Ips.Skip(1));
-                    ApplyRdcResources(rom, (bool)opts.SurpriseMe ? Rdc.GetRandomSprites(options) : opts.Sprites);
+                    ApplyRdcResources(rom, sprites);
 
                     File.WriteAllBytes($"{filename}.sfc", rom);
 
@@ -374,6 +388,11 @@ namespace Randomizer.CLI.Verbs {
             if (!String.IsNullOrEmpty(opts.ConfigFile) && File.Exists(opts.ConfigFile)) {
                 conf = JsonConfig.ParseConfig(opts.ConfigFile);
             }
+
+            if (conf.Metroid == null)
+                throw new ArgumentException("You haven't specified a 'Metroid' configuration section. Please reference the sample_conifg.json");
+            if (conf.Zelda == null)
+                throw new ArgumentException("You haven't specified a 'Zelda' configuration section. Please reference the sample_config.json");
 
             // Coalesce options into opts while we're here; this is technically a side-effect
             opts.Multi ??= conf.Multi ?? (bool)opts.defaults["Multi"];
@@ -472,7 +491,7 @@ namespace Randomizer.CLI.Verbs {
                     smz3.SwordLocation = !String.IsNullOrEmpty(conf.Zelda.SwordLocation) ? conf.Zelda.SwordLocation : (string)smz3.defaults["SwordLocation"];
 
                 if (String.IsNullOrEmpty(smz3.MorphLocation))
-                    smz3.MorphLocation = !String.IsNullOrEmpty(conf.Zelda.MorphLocation) ? conf.Zelda.MorphLocation : (string)smz3.defaults["MorphLocation"];
+                    smz3.MorphLocation = !String.IsNullOrEmpty(conf.Metroid.MorphLocation) ? conf.Metroid.MorphLocation : (string)smz3.defaults["MorphLocation"];
 
                 if (String.IsNullOrEmpty(smz3.KeyShuffle))
                     smz3.KeyShuffle = !String.IsNullOrEmpty(conf.Zelda.KeyShuffle) ? conf.Zelda.KeyShuffle : (string)smz3.defaults["KeyShuffle"];
@@ -580,12 +599,16 @@ namespace Randomizer.CLI.Verbs {
             }
         }
 
-        private static string ConstructBaseIps(IRandomizer randomizer, GenSeedOptions opts) {
+        private static string ConstructBaseIps(IRandomizer randomizer, GenSeedOptions opts, string[] authors) {
             var ips_file = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
 
-            string ips_opts = $"build.py --config {opts.AutoIPSConfig} --output {ips_file} --no-cleanup";
+            string ips_opts = $"build.py --config {opts.AutoIPSConfig} --output {ips_file}";
             if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
                 ips_opts += $" --asar {opts.AsarBin}";
+            if (authors.Length > 1) {
+                ips_opts += $" --smspriteauthor {authors[0]}";
+                ips_opts += $" --z3spriteauthor {authors[1]}";
+            }
             if ((bool)opts.SurpriseMe)
                 ips_opts += " --surprise_me";
             if (opts is SMSeedOptions)
