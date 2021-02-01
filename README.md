@@ -9,7 +9,7 @@ https://github.com/tewtal/SMZ3Randomizer
 The canonical method of running this version is from command line.
 cd into Randomizer.CLI and run:
 
-`dotnet run smz3 --config <config file>`
+`dotnet run smz3 --config <config file>`  
 `dotnet run sm --config <config file>`
 
 You can look at json_config_options.md for a break of relevant options.
@@ -30,7 +30,7 @@ some SMZ3 KeyShuffle/Keycard variants) then you'll need:
 * asar
 
 
-If you want to use the SurpriseMe (which is just fun) then you'll need:
+If you want to use the SurpriseMe option (which is fun) then you'll need:
 * python3
 * SpriteSomething checked out locally
 * A local directory to cache the sprite inventory and downloaded sprites
