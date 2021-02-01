@@ -232,7 +232,8 @@ namespace Randomizer.CLI.FileData {
                 sm_sprites = Directory.GetFiles(Path.Combine(SpriteCachePath, "sm"), "*.rdc*");
             }
 
-            sm_sprites = sm_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
+            if (avoid.Length > 0)
+                sm_sprites = sm_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
 
             int chosen = tmp_rnd.Next(sm_sprites.Length);
             if (authors != null && authors.Length >= chosen)
