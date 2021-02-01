@@ -2,7 +2,7 @@
     "Metroid": {
         "smFile": ".\Super_Metroid_JU_.sfc",
         "SMLogic": "Hard",
-        "Keycards": "Randomized"
+        "Keycards": "Exist"
         "MorphLocation": "Original",
         "Placement": "Split",
     },
@@ -42,5 +42,5 @@
     "SpriteCachePath": "D:\Users\test\sprites",
     "SpriteSomethingBin": "D:\Users\test\SpriteSomething\SpriteSomething.py",
     "Sprites": [ "D:\Users\test\sprites\sm\dark_samus.2.sm.rdc.gz", "D:\Users\test\sprites\z3\toadette.2.rdc" ],
-    "AvoidSprites": [ "hitbox", "cursor" ]
+    "AvoidSprites": [ "hitbox", "cursor", "eggplant" ]
 }

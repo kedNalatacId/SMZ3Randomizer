@@ -95,6 +95,11 @@ namespace Randomizer.SuperMetroid {
                 LiveDangerously = Rnd.Next(100) < 70 ? true : false;
                 Keycards        = Keycards.Mystery;
 
+                Placement = Rnd.Next(10) switch {
+                    var n when n < 3 => Placement.Split,
+                    _ => Placement.Full
+                };
+
                 MorphLocation = Rnd.Next(100) switch {
                     var n when n < 5  => MorphLocation.Original,
                     var n when n < 10 => MorphLocation.Early,
@@ -109,10 +114,11 @@ namespace Randomizer.SuperMetroid {
             } else {
                 Goal            = ParseOption(options, Goal.DefeatMB);
                 GoFast          = ParseOption(options, "GoFast", false);
+                Keycards        = ParseOption(options, Keycards.Keysanity);
                 LiveDangerously = ParseOption(options, "LiveDangerously", false);
                 MorphLocation   = ParseOption(options, MorphLocation.Randomized);
+                Placement       = ParseOption(options, Placement.Split);
                 SMLogic         = ParseOption(options, SMLogic.Normal);
-                Keycards        = ParseOption(options, Keycards.Keysanity);
             }
 
             while (Keycards == Keycards.Mystery) {

@@ -10,8 +10,31 @@ The canonical method of running this version is from command line.
 cd into Randomizer.CLI and run:
 
 `dotnet run smz3 --config <config file>`
+`dotnet run sm --config <config file>`
 
-You can look at example.json for a break of all the options.
+You can look at json_config_options.md for a break of relevant options.
+You can look at sample_config.json for a reasonable default config that you
+will need to modify in order to put in your own details.
+
+You can use the same config for both SMR and SMZ3!
+
+In order to make a Super Metroid seed you WILL NEED the Zelda ROM available. The
+Super Metroid Randomizer "double stacks" the ROM image, the same way SMZ3 does
+(and uses the same alttp_sm_combo_randomizer_rom assembly on the backend).
+
+
+If you want to use AutoIPS option (required for SMR with keycards and 
+some SMZ3 KeyShuffle/Keycard variants) then you'll need:
+* alttp_sm_combo_randomizer_rom checked out, and both repos will need to have the "personal" branches checked out.
+* python3
+* asar
+
+
+If you want to use the SurpriseMe (which is just fun) then you'll need:
+* python3
+* SpriteSomething checked out locally
+* A local directory to cache the sprite inventory and downloaded sprites
+
 
 -----
 
@@ -27,6 +50,9 @@ These are presented in no particular order.
 - "Medium" Zelda logic
     - more akin to "advanced item placement" from ALTTPR
     - includes dark rooms and fake flippers (+ a little)
+        - also includes reductions in TR laser bridge items (no safety, lamp not required, etc)
+        - ice breaker
+        - etc
     - likely to be removed or changed when zelda logic comes in
 - "Hard" Zelda logic
     - more or less unimpleneted; likely to be removed
@@ -131,7 +157,7 @@ These are presented in no particular order.
     - anything that doesn't open up a new location has been removed from progression
 - changed out two reserve tanks for two e-tanks in progression items
     - generally i think newer players would rather have an e-tank than a reserve tank
-- removed all but one missile, super, and power bomb from progression
+- removed all but one missile, super, and two power bombs from progression
 - removed G4 requirement from opening Ganon's Tower
     - this means some Metroid bosses might be behind Agahnim 3
     - but Agahnim 3 is (currently) required anyway
@@ -147,3 +173,27 @@ These are presented in no particular order.
 - Stole various PRs from others
     - including ComposeFilename, which gets used when OutputFile isn't set
     - more to come (various logic fixes, etc)
+
+
+-----
+
+Further changes that have been added:
+
+- Super Metroid Randomizer with keycards available
+    - This uses the SMZ3 codebase and assembly
+    - The ROM is "double-stacked", just like SMZ3 (most have both ROM images available
+        to create an SMR seed)
+    - This means that certain blocks in red tower and cathedral have NOT been replaced
+        and soft-locking in those places IS an issue
+    - For NOW (hopefully to be fixed) Zebes starts awake, not sleeping. Sorry :(
+    - The logic here is still very much under review and not yet nailed down;
+        seeds will occasionally fail to create. Hopefully this will be more stable
+        in the future.
+- Sprites are downloaded and applied "just in time"
+    - SpriteSomething is used to convert .jpg and .zspr files to .rdc's and cached
+    - the cached files are then applied
+    - future work (TODO): allowing specifying a sprite by name and it will get pulled from
+        online, converted, cached, and then applied
+    - sprite authors are injected into the credits when using "SurpriseMe"
+    - sprites in "SurpriseMe" mode are only allowed to be "approved for SMZ3" sprites
+        - Please don't use sprites without the author's permission
