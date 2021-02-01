@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Randomizer.Shared.Contracts;
 using static Randomizer.Shared.Contracts.RandomizerOptionType;
+using Newtonsoft.Json;
 
 namespace Randomizer.SuperMetroid {
 
     public class Randomizer : IRandomizer {
 
-        public static readonly Version version = new Version(3, 0);
+        public static readonly Version version = new Version(3, 1);
+        public Random randoRnd { get; set; } = new Random();
 
         public string Id => "sm";
         public string Name => "Super Metroid Item Randomizer";
@@ -20,9 +22,11 @@ namespace Randomizer.SuperMetroid {
         static Regex alphaNumeric = new Regex(@"[A-Z\d]", RegexOptions.IgnoreCase);
 
         public List<IRandomizerOption> Options => new List<IRandomizerOption> {
-            Config.GetRandomizerOption<Logic>("Logic"),
+            Config.GetRandomizerOption<SMLogic>("Super Metroid Logic"),
             Config.GetRandomizerOption<Goal>("Goal"),
             Config.GetRandomizerOption<Placement>("Item Placement"),
+            Config.GetRandomizerOption<MorphLocation>("Morph Ball"),
+            Config.GetRandomizerOption<Keycards>("Keycards"),
             new RandomizerOption {
                 Key = "seed", Description = "Seed", Type = Seed
             },
@@ -47,48 +51,37 @@ namespace Randomizer.SuperMetroid {
                     throw new ArgumentOutOfRangeException("Expected the seed option value to be an integer value in the range [0, 2147483647]");
             }
 
-            var rnd = new Random(randoSeed);
-            var config = new Config(options);
-
-            if (config.Race) {
-                rnd = new Random(rnd.Next());
-            }
-
-            int players = options.ContainsKey("players") ? int.Parse(options["players"]) : 1;
+            randoRnd = new Random(randoSeed);
+            Config = new Config(options, randoRnd);
             var worlds = new List<World>();
 
-            if (config.GameMode == GameMode.Normal || players == 1) {
-                worlds.Add(new World(config, "Player", 0, new HexGuid()));
+            /* FIXME: Just here to semi-obfuscate race seeds until a better solution is in place */
+            if (Config.Race) {
+                randoRnd = new Random(randoRnd.Next());
             }
-            else {
+
+            if (Config.GameMode == GameMode.Normal) {
+                worlds.Add(new World(Config, "Player", 0, new HexGuid()));
+            } else {
+                int players = options.ContainsKey("players") ? int.Parse(options["players"]) : 1;
                 for (int p = 0; p < players; p++) {
                     var found = options.TryGetValue($"player-{p}", out var player);
                     if (!found || !alphaNumeric.IsMatch(player))
                         throw new ArgumentException($"Name for player {p + 1} not provided, or contains no alphanumeric characters");
-                    worlds.Add(new World(config, player, p, new HexGuid()));
+                    worlds.Add(new World(Config, player, p, new HexGuid()));
                 }
             }
 
-            var filler = new Filler(worlds, config, rnd);
+            var filler = new Filler(worlds, Config, randoRnd);
             filler.Fill();
 
-            var playthrough = new Playthrough(worlds, config);
-            var spheres = playthrough.Generate();
+            var guid = new HexGuid();
+            List<IWorldData> wlds = new List<IWorldData>();
 
-            var seedData = new SeedData {
-                Guid = new HexGuid(),
-                Seed = seed,
-                Game = Name,
-                Logic = config.Logic.ToLString(),
-                Playthrough = config.Race ? new List<Dictionary<string, string>>() : spheres,
-                Mode = config.GameMode.ToLString(),
-                Worlds = new List<IWorldData>()
-            };
-
-            int patchSeed = rnd.Next();
+            int patchSeed = randoRnd.Next();
             foreach(var world in worlds) {
                 var patchRnd = new Random(patchSeed);
-                var patch = new Patch(world, worlds, seedData.Guid, config.Race ? 0 : randoSeed, patchRnd);
+                var patch = new Patch(world, worlds, guid, Config.Race ? 0 : randoSeed, patchRnd);
                 var worldData = new WorldData {
                     Id = world.Id,
                     Guid = world.Guid,
@@ -97,14 +90,29 @@ namespace Randomizer.SuperMetroid {
                     Locations = world.Locations.Select(l => new LocationData() { LocationId = l.Id, ItemId = (int)l.Item.Type, ItemWorldId = l.Item.World.Id }).ToList<ILocationData>()
                 };
 
-                seedData.Worlds.Add(worldData);
+                wlds.Add(worldData);
             }
 
-            return seedData;
+            var playthrough = new Playthrough(worlds, Config);
+            var spheres = playthrough.Generate();
+
+            var spoiler = new Spoiler(wlds, Config, options, GetItems(), GetLocations());
+            var spoiler_log = spoiler.Generate(spheres, ExportConfig());
+
+            return new SeedData {
+                Guid = guid,
+                Seed = seed,
+                Game = Name,
+                Mode = Config.GameMode.ToLString(),
+                Logic = Config.SMLogic.ToLString(),
+                Playthrough = Config.Race ? new List<Dictionary<string, string>>() : spheres,
+                Spoiler = Config.Race ? "{}" : JsonConvert.SerializeObject(spoiler_log, Formatting.Indented),
+                Worlds = wlds,
+            };
         }
 
         public Dictionary<int, ILocationTypeData> GetLocations() =>
-            new World(new Config(new Dictionary<string, string>()), "", 0, "")
+            new World(new Config(new Dictionary<string, string>(), randoRnd), "", 0, "")
                 .Locations.Select(location => new LocationTypeData {
                     Id = location.Id,
                     Name = location.Name,
@@ -121,11 +129,16 @@ namespace Randomizer.SuperMetroid {
 
         public Dictionary<string, string> ExportConfig() => new Dictionary<string, string>() {
             {"GameMode", Config.GameMode.ToString()},
-            {"SMLogic", Config.Logic.ToString()},
             {"Goal", Config.Goal.ToString()},
+            {"GoFast", Config.GoFast.ToString()},
+            {"Keycards", Config.Keycards.ToString()},
+            {"LiveDangerously", Config.LiveDangerously.ToString()},
+            {"MorphLocation", Config.MorphLocation.ToString()},
+            {"MysterySeed", Config.MysterySeed.ToString()},
             {"Placement", Config.Placement.ToString()},
             {"Race", Config.Race.ToString()},
-            {"Keycards", Config.Keysanity.ToString()},
+            {"RandomCards", JsonConvert.SerializeObject(Config.RandomCards)},
+            {"SMLogic", Config.SMLogic.ToString()},
         };
     }
 

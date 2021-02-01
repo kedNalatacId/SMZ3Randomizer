@@ -1,64 +1,109 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Randomizer.Shared.Contracts;
 using System.Linq;
-using static Randomizer.SuperMetroid.ItemType;
+using Newtonsoft.Json;
 
 namespace Randomizer.SuperMetroid {
     class Filler {
         List<World> Worlds { get; set; }
-        List<Item> ProgressionItems { get; set; } = new List<Item>();
-        List<Item> NiceItems { get; set; } = new List<Item>();
-        List<Item> JunkItems { get; set; } = new List<Item>();
-        Random Rnd { get; set; }
         Config Config { get; set; }
+        Random Rnd { get; set; }
 
         public Filler(List<World> worlds, Config config, Random rnd) {
             Worlds = worlds;
-            Rnd = rnd;
             Config = config;
-
-            /* Populate filler item pool with items for each world */
-            foreach (var world in worlds) {
-                ProgressionItems.AddRange(Item.CreateProgressionPool(world, Rnd));
-                NiceItems.AddRange(Item.CreateNicePool(world, Rnd));
-                JunkItems.AddRange(Item.CreateJunkPool(world, Rnd));
-            }
+            Rnd = rnd;
         }
 
         public void Fill() {
-            /* First fill the worlds with the very basic tools for progression from their own respective worlds */
-            InitialFill(ProgressionItems, Worlds);
+            var progressionItems = new List<Item>();
+            var baseItems = new List<Item>();
+
+            foreach (var world in Worlds) {
+                var progression = Item.CreateProgressionPool(world);
+
+                /* If not using keycards then add keycards to the "base items" list.
+                    This simplifies logic programming since it assumes that the character has the keycard */
+                if (Config.UseKeycards) {
+                    progression.AddRange(Item.CreateKeycards(world));
+                } else {
+                    baseItems = baseItems.Concat(Item.CreateKeycards(world)).ToList();
+                }
+
+                InitialFillInOwnWorld(progression, world);
+
+                progressionItems.AddRange(progression);
+            }
+
+            progressionItems = progressionItems.Shuffle(Rnd);
+
+            var niceItems = Worlds.SelectMany(world => Item.CreateNicePool(world)).Shuffle(Rnd);
+            var junkItems = Worlds.SelectMany(world => Item.CreateJunkPool(world)).Shuffle(Rnd);
+
+            var locations = Worlds.SelectMany(x => x.Locations).Empty().Shuffle(Rnd);
+            if (Config.GameMode != GameMode.Multiworld) {
+                locations = ApplyLocationWeighting(locations).ToList();
+            } else {
+                var r = Rnd.Next(2);
+                ApplyItemBias(progressionItems, new[] {
+                    (ItemType.Varia, (.20 + r * .20)),
+                    (ItemType.Gravity, (.20 + (1 - r) * .20)),
+                });
+            }
 
             /* Priority fill items that needs to be placed first (will be placed in random order out of all items matching the types) */
-            PriorityFill(new[] { Varia, Gravity }, ProgressionItems, new List<Item>(), Worlds);
+            // PriorityFill(new[] { Varia, Gravity }, ProgressionItems, new List<Item>(), Worlds);
 
-            /* Next up we do assumed filling of progression items cross-world */
-            AssumedFill(ProgressionItems, new List<Item>(), Worlds);
+            AssumedFill(progressionItems, baseItems, locations, Worlds);
 
-            /* Fast fill (no logic) the rest of the world */
-            FastFill(NiceItems, Worlds);
-            FastFill(JunkItems, Worlds);
+            FastFill(niceItems, locations);
+            FastFill(junkItems, locations);
         }
 
-        public void PriorityFill(IList<ItemType> itemTypes, List<Item> items, List<Item> initialItems, List<World> worlds) {
+        void ApplyItemBias(List<Item> itemPool, IEnumerable<(ItemType type, double weight)> reorder) {
+            var n = itemPool.Count;
+
+            /* Gather all items that are being biased */
+            var items = reorder.ToDictionary(x => x.type, x => itemPool.FindAll(item => item.Type == x.type));
+            itemPool.RemoveAll(item => reorder.Any(x => x.type == item.Type));
+
+            /* Insert items from each biased type such that their lowest index
+             * is based on their weight on the original pool size
+             */
+            foreach (var (type, weight) in reorder.OrderByDescending(x => x.weight)) {
+                var i = (int)(n * (1 - weight));
+                if (i >= itemPool.Count)
+                    throw new InvalidOperationException($"Too many items are being biased which makes the tail portion for {type} too big");
+                foreach (var item in items[type]) {
+                    var k = Rnd.Next(i, itemPool.Count);
+                    itemPool.Insert(k, item);
+                }
+            }
+        }
+
+        IEnumerable<Location> ApplyLocationWeighting(IEnumerable<Location> locations) {
+            return from location in locations.Select((x, i) => (x, i: i - x.Weight))
+                   orderby location.i select location.x;
+        }
+
+        /* public void PriorityFill(IList<ItemType> itemTypes, List<Item> items, List<Item> initialItems, List<World> worlds) {
             var assumedItems = new List<Item>(items.Where(x => !itemTypes.Contains(x.Type)));
             var priorityItems = new List<Item>(items.Where(x => itemTypes.Contains(x.Type)));
             var locations = worlds.SelectMany(w => w.Locations).ToList().Empty();
 
-            /* Place items until priority item pool is empty */
+            // Place items until priority item pool is empty
             while (priorityItems.Count > 0) {
 
-                /* Get a candidate item from the pool */
+                // Get a candidate item from the pool
                 var itemToPlace = priorityItems.Shuffle(Rnd).First();
 
-                /* Remove it from the pool */
+                // Remove it from the pool
                 priorityItems.Remove(itemToPlace);
 
-                /* Get a location */
+                // Get a location
                 var inventory = CollectItems(assumedItems.Concat(initialItems).ToList(), worlds).ToList();
-                var locationsToPlace = Config.Placement switch
-                {
+                var locationsToPlace = Config.Placement switch {
                     Placement.Split => locations.Where(x => x.Class == itemToPlace.Class).ToList().CanFillWithinWorld(itemToPlace, inventory),
                     _ => locations.CanFillWithinWorld(itemToPlace, inventory)
                 };
@@ -70,53 +115,41 @@ namespace Randomizer.SuperMetroid {
 
                 var locationToPlace = locationsToPlace.Shuffle(Rnd).First();
 
-                /* Get the world from the location */
+                // Get the world from the location
                 var world = locationToPlace.Region.World;
 
-                /* Place item at location */
+                // Place item at location
                 locationToPlace.Item = itemToPlace;
-                world.Items.Add(itemToPlace);
                 items.Remove(itemToPlace);
                 locations.Remove(locationToPlace);
             }
-        }
+        } */
 
-        public void AssumedFill(List<Item> items, List<Item> initialItems, List<World> worlds) {
-            var assumedItems = new List<Item>(items);
-            var locations = worlds.SelectMany(w => w.Locations).ToList().Empty();
+        void AssumedFill(List<Item> itemPool, List<Item> baseItems, IEnumerable<Location> locations, IEnumerable<World> worlds) {
+            var assumedItems = new List<Item>(itemPool);
+            int fail_counter = 0;
 
             /* Place items until progression item pool is empty */
             while (assumedItems.Count > 0) {
+                var item = assumedItems.First();
+                assumedItems.Remove(item);
 
-                /* Get a candidate item from the pool */
-                var itemToPlace = assumedItems.Shuffle(Rnd).First();
-
-                /* Remove it from the pool */
-                assumedItems.Remove(itemToPlace);
-
-                /* Get a location */
-                var inventory = CollectItems(assumedItems.Concat(initialItems).ToList(), worlds).ToList();
-                var locationsToPlace = Config.Placement switch
-                {
-                    Placement.Split => locations.Where(x => x.Class == itemToPlace.Class && CanPlaceAtLocation(x, itemToPlace.Type)).ToList().CanFillWithinWorld(itemToPlace, inventory),
-                    _ => locations.Where(x => CanPlaceAtLocation(x, itemToPlace.Type)).ToList().CanFillWithinWorld(itemToPlace, inventory)
+                var inventory = CollectItems(assumedItems.Concat(baseItems).ToList(), worlds);
+                var location = Config.Placement switch {
+                    Placement.Split => locations.Empty().Where(x => x.Class == item.Class).ToList().CanFillWithinWorld(item, inventory).FirstOrDefault(),
+                    _ => locations.Empty().CanFillWithinWorld(item, inventory).FirstOrDefault()
                 };
 
-                if (locationsToPlace.Count == 0) {
-                    assumedItems.Add(itemToPlace);
+                if (location == null) {
+                    assumedItems.Add(item);
+                    if (++fail_counter > locations.Empty().Count()) {
+                        throw new CannotFillWorldException("Cannot fill world");
+                    }
                     continue;
                 }
 
-                var locationToPlace = locationsToPlace.Shuffle(Rnd).First();
-
-                /* Get the world from the location */
-                var world = locationToPlace.Region.World;
-
-                /* Place item at location */
-                locationToPlace.Item = itemToPlace;
-                world.Items.Add(itemToPlace);
-                items.Remove(itemToPlace);
-                locations.Remove(locationToPlace);
+                location.Item = item;
+                itemPool.Remove(item);
             }
         }
 
@@ -136,7 +169,13 @@ namespace Randomizer.SuperMetroid {
             return myItems;
         }
 
-        public void FastFill(List<Item> items, List<World> worlds) {
+        public void FastFill(List<Item> items, IEnumerable<Location> locations) {
+            foreach (var (location, item) in locations.Empty().Zip(items, (l, i) => (l, i)).ToList()) {
+                location.Item = item;
+                items.Remove(item);
+            }
+        }
+/* There are no major items in nice or junk (anymore); can fill them anywhere
             while (items.Count > 0) {
                 var item = items.Shuffle(Rnd).First();
                 var location = Config.Placement switch
@@ -147,7 +186,6 @@ namespace Randomizer.SuperMetroid {
 
                 if (location != null) {
                     location.Item = item;
-                    location.Region.World.Items.Add(item);
                     items.Remove(item);
                 }
                 else {
@@ -155,75 +193,80 @@ namespace Randomizer.SuperMetroid {
                 }
             }
         }
+*/
 
-        private List<Item> InitialFill(List<Item> items, List<World> worlds) {
-            foreach (var world in worlds) {
-                /* Place Morph */
-                FrontFillItemInWorld(world, items, Morph, true);
+        void InitialFillInOwnWorld(List<Item> progressionItems, World world) {
+            if (Config.MorphLocation == MorphLocation.Original)
+                FillItemAtLocation(progressionItems, ItemType.Morph, world.Locations.Get("Morphing Ball"));
 
-                /* Place missile or super */
-                FrontFillItemInWorld(world, items, Rnd.Next(2) == 0 ? Missile : Super, true);
+            /* Place a way to break bomb blocks. */
+            int choice = -1;
+            if (Config.SMLogic == SMLogic.Normal)
+                choice = Rnd.Next(2);
+            else
+                choice = Rnd.Next(3);
 
-                /* Place a way to break bomb blocks.
-                 * If split placement is used with casual logic we must place a powerbomb since there are no more major item locations available */
-                if (Config.Placement == Placement.Split && Config.Logic == Logic.Casual) {
-                    FrontFillItemInWorld(world, items, PowerBomb);
-                } else {
-                    FrontFillItemInWorld(world, items, Rnd.Next(8) switch
-                    {
-                        0 => ScrewAttack,
-                        1 => SpeedBooster,
-                        2 => Bombs,
-                        _ => PowerBomb
-                    }, true);
-                }
+            if (!Config.UseKeycards)
+                choice++;
 
-                /* With split placement, we'll run into problem with placement if progression minors aren't available from the start */
-                if (Config.Placement == Placement.Split) {
-                    /* If missile was placed, also place a super */
-                    if (!world.Items.Exists(x => x.Type == Super)) {
-                        FrontFillItemInWorld(world, items, Super, true);
-                    }
+            FrontFillItemInWorld(world, progressionItems, choice switch {
+                0 => ItemType.CardBrinstarL1,
+                1 => ItemType.Morph,
+                2 => ItemType.ScrewAttack,
+                _ => ItemType.SpeedBooster,
+            }, true);
 
-                    /* If no power bomb was placed, place one */
-                    if (!world.Items.Exists(x => x.Type == PowerBomb)) {
-                        FrontFillItemInWorld(world, items, PowerBomb, true);
-                    }
-                }
-
+            /* Place a way to break bomb blocks.
+             * If split placement is used with normal logic we must place a powerbomb since there are no more major item locations available */
+            if (choice == 1 && Config.Placement == Placement.Split && Config.SMLogic == SMLogic.Normal) {
+                FrontFillItemInWorld(world, progressionItems, ItemType.PowerBomb, true);
             }
 
-            return worlds.SelectMany(w => w.Items).ToList();
+/*  WIP     if (choice != 1 && Config.MorphLocation == MorphLocation.Early)
+                FrontFillItemInWorld(world, progressionItems, ItemType.Morph, true);
+
+            if (!Config.LiveDangerously)
+                FrontFillItemInWorld(world, progressionItems, Rnd.Next(2) == 0 ? ItemType.Missile : ItemType.Super, true);
+
+            // With split placement, we'll run into problem with placement if progression minors aren't available from the start
+            if (Config.Placement == Placement.Split) {
+                // If missile was placed, also place a super
+                if (world.Locations.Filled().Where(l => l.ItemIs(Super, world)).ToList().Count == 0) {
+                    FrontFillItemInWorld(world, progressionItems, ItemType.Super, true);
+                }
+
+                // If no power bomb was placed, place one
+                if (world.Locations.Filled().Where(l => l.ItemIs(PowerBomb, world)).ToList().Count == 0) {
+                    FrontFillItemInWorld(world, progressionItems, ItemType.PowerBomb, true);
+                }
+            }
+ENDWIP */
         }
 
         private void FrontFillItemInWorld(World world, List<Item> itemPool, ItemType itemType, bool restrictWorld = false) {
             /* Get a shuffled list of available locations to place this item in */
             Item item = restrictWorld ? itemPool.Get(itemType, world) : itemPool.Get(itemType);
-            var availableLocations = Config.Placement switch
-            {
-                Placement.Split => world.Locations.Empty().Where(x => x.Class == item.Class && CanPlaceAtLocation(x, itemType)).ToList().Available(world.Items).Shuffle(Rnd),
-                _ => world.Locations.Empty().Where(x => CanPlaceAtLocation(x, itemType)).ToList().Available(world.Items).Shuffle(Rnd)
+            var availableLocations = Config.Placement switch {
+                Placement.Split => world.Locations.Empty().Where(x => x.Class == item.Class).ToList().Available(world.Items).Shuffle(Rnd),
+                _ => world.Locations.Empty().ToList().Available(world.Items).Shuffle(Rnd)
             };
 
             if (availableLocations.Count > 0) {
                 var locationToFill = availableLocations.First();
                 locationToFill.Item = item;
                 itemPool.Remove(item);
-                world.Items.Add(item);
-            }
-            else {
+            } else {
                 throw new Exception("No location to place item:" + item.Name);
             }
         }
 
         private bool CanPlaceAtLocation(Location location, ItemType itemType) {
             if (Config.GameMode == GameMode.Normal) {
-                return itemType switch
-                {
-                    Gravity => (!(location.Region.Area == "Crateria" || location.Region.Area == "Brinstar")) || location.Name == "X-Ray Scope" || location.Name == "Energy Tank, Waterway",
-                    Varia => (!(location.Region.Area == "LowerNorfair" || location.Region.Area == "Crateria" || location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling")),
-                    SpeedBooster => !(location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling"),
-                    ScrewAttack => !(location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling"),
+                return itemType switch {
+                    ItemType.Gravity => (!(location.Region.Area == "Crateria" || location.Region.Area == "Brinstar")) || location.Name == "X-Ray Scope" || location.Name == "Energy Tank, Waterway",
+                    ItemType.Varia => (!(location.Region.Area == "LowerNorfair" || location.Region.Area == "Crateria" || location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling")),
+                    ItemType.SpeedBooster => !(location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling"),
+                    ItemType.ScrewAttack => !(location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling"),
                     _ => true
                 };
             } else {
@@ -231,6 +274,10 @@ namespace Randomizer.SuperMetroid {
             }
         }
 
+        void FillItemAtLocation(List<Item> itemPool, ItemType itemType, Location location) {
+            var itemToPlace = itemPool.Get(itemType);
+            location.Item = itemToPlace ?? throw new InvalidOperationException($"Tried to place item {itemType} at {location.Name}, but there is no such item in the item pool");
+            itemPool.Remove(itemToPlace);
+        }
     }
-
 }

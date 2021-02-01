@@ -7,12 +7,22 @@ using System.Reflection;
 
 namespace Randomizer.SuperMetroid {
 
-    [DefaultValue(Tournament)]
-    public enum Logic {
-        [Description("Casual")]
-        Casual,
-        [Description("Tournament")]
-        Tournament
+    [DefaultValue(Normal)]
+    public enum GameMode {
+        [Description("Single player")]
+        Normal,
+        [Description("Multiworld")]
+        Multiworld
+    }
+
+    [DefaultValue(Normal)]
+    public enum SMLogic {
+        [Description("Normal")]
+        Normal,
+        [Description("Medium")]
+        Medium,
+        [Description("Hard")]
+        Hard,
     }
 
     [DefaultValue(Split)]
@@ -23,12 +33,14 @@ namespace Randomizer.SuperMetroid {
         Split
     }
 
-    [DefaultValue(Normal)]
-    public enum GameMode {
-        [Description("Single player")]
-        Normal,
-        [Description("Multiworld")]
-        Multiworld
+    [DefaultValue(Randomized)]
+    public enum MorphLocation {
+        [Description("Randomized")]
+        Randomized,
+        [Description("Early")]
+        Early,
+        [Description("Original location")]
+        Original
     }
 
     [DefaultValue(DefeatMB)]
@@ -37,21 +49,89 @@ namespace Randomizer.SuperMetroid {
         DefeatMB,
     }
 
+    [DefaultValue(None)]
+    public enum Keycards {
+        [Description("None")]
+        None,
+        [Description("Randomized")]
+        Randomized,
+        [Description("Mystery")]
+        Mystery,
+        [Description("Exist")]
+        Exist,
+        [Description("Keysanity")]
+        Keysanity
+    }
+
+    public enum RandomizedItemLocation {
+        [Description("Home")]
+        Home,
+        [Description("Anywhere")]
+        Anywhere
+    }
+
     public class Config {
         public GameMode GameMode { get; set; } = GameMode.Normal;
-        public Logic Logic { get; set; } = Logic.Tournament;
+        public SMLogic SMLogic { get; set; } = SMLogic.Normal;
+        public MorphLocation MorphLocation { get; set; } = MorphLocation.Randomized;
         public Goal Goal { get; set; } = Goal.DefeatMB;
         public Placement Placement { get; set; } = Placement.Split;
         public bool Race { get; set; } = false;
-        public bool Keysanity { get; set; } = false;
+        public bool GoFast { get; set; } = false;
+        public bool LiveDangerously { get; set; } = false;
+        public Keycards Keycards { get; set; } = Keycards.None;
+        public bool UseKeycards => Keycards != Keycards.None;
+        public Dictionary<string,RandomizedItemLocation> RandomCards { get; set; }
+        public bool MysterySeed { get; set; } = false;
 
-        public Config(IDictionary<string, string> options) {
-            GameMode = ParseOption(options, GameMode.Normal);
-            Logic = ParseOption(options, Logic.Tournament);
-            Goal = ParseOption(options, Goal.DefeatMB);
-            Placement = ParseOption(options, Placement.Split);
-            Race = ParseOption(options, "Race", false);
-            Keysanity = false;
+        public Config(IDictionary<string, string> options, Random Rnd) {
+            GameMode        = ParseOption(options, GameMode.Normal);
+            MysterySeed     = ParseOption(options, "MysterySeed", false);
+            Race            = ParseOption(options, "Race", false);
+
+            if (MysterySeed) {
+                Goal            = ParseOption(options, Goal.DefeatMB);
+                GoFast          = Rnd.Next(100) < 10 ? true : false;
+                LiveDangerously = Rnd.Next(100) < 70 ? true : false;
+                Keycards        = Keycards.Mystery;
+
+                MorphLocation = Rnd.Next(100) switch {
+                    var n when n < 5  => MorphLocation.Original,
+                    var n when n < 10 => MorphLocation.Early,
+                    _ => MorphLocation.Randomized
+                };
+
+                SMLogic = Rnd.Next(100) switch {
+                    var n when n < 20 => SMLogic.Hard,
+                    var n when n < 40 => SMLogic.Normal,
+                    _ => SMLogic.Medium
+                };
+            } else {
+                Goal            = ParseOption(options, Goal.DefeatMB);
+                GoFast          = ParseOption(options, "GoFast", false);
+                LiveDangerously = ParseOption(options, "LiveDangerously", false);
+                MorphLocation   = ParseOption(options, MorphLocation.Randomized);
+                SMLogic         = ParseOption(options, SMLogic.Normal);
+                Keycards        = ParseOption(options, Keycards.Keysanity);
+            }
+
+            while (Keycards == Keycards.Mystery) {
+                Array orig_card_types = Enum.GetValues(typeof(Keycards));
+                Array card_types = Array.CreateInstance(typeof(Keycards), orig_card_types.Length + 6);
+                Array.Copy(orig_card_types, card_types, orig_card_types.Length);
+                for (int i = 0; i < (card_types.Length - orig_card_types.Length); i++)
+                    card_types.SetValue(Keycards.Mystery, orig_card_types.Length + i);
+                Keycards = (Keycards)card_types.GetValue(Rnd.Next(card_types.Length));
+            }
+
+            if (Keycards == Keycards.Randomized) {
+                Array rando_types = Enum.GetValues(typeof(RandomizedItemLocation));
+                RandomCards = new Dictionary<string, RandomizedItemLocation>() {
+                    {"one", (RandomizedItemLocation)rando_types.GetValue(Rnd.Next(rando_types.Length))},
+                    {"two", (RandomizedItemLocation)rando_types.GetValue(Rnd.Next(rando_types.Length))},
+                    {"boss", (RandomizedItemLocation)rando_types.GetValue(Rnd.Next(rando_types.Length))}
+                };
+            }
         }
 
         private TEnum ParseOption<TEnum>(IDictionary<string, string> options, TEnum defaultValue) where TEnum : Enum {
@@ -71,6 +151,13 @@ namespace Randomizer.SuperMetroid {
             else {
                 return defaultValue;
             }
+        }
+
+        public string GetRandomCardsAsString () {
+            if (RandomCards == null)
+                return "{}";
+
+            return "{" + string.Join(",", RandomCards.Select(kv => kv.Key + "=" + kv.Value)) + "}";
         }
 
         public static RandomizerOption GetRandomizerOption<T>(string description, string defaultOption = "") where T : Enum {
@@ -105,23 +192,6 @@ namespace Randomizer.SuperMetroid {
             else {
                 return default;
             }
-        }
-    }
-    public static class EnumExtensions {
-        public static string GetDescription(this Enum GenericEnum) {
-            Type genericEnumType = GenericEnum.GetType();
-            MemberInfo[] memberInfo = genericEnumType.GetMember(GenericEnum.ToString());
-            if ((memberInfo != null && memberInfo.Length > 0)) {
-                var _Attribs = memberInfo[0].GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false);
-                if ((_Attribs != null && _Attribs.Count() > 0)) {
-                    return ((System.ComponentModel.DescriptionAttribute)_Attribs.ElementAt(0)).Description;
-                }
-            }
-            return GenericEnum.ToString();
-        }
-
-        public static string ToLString(this Enum enumValue) {
-            return enumValue.ToString().ToLower();
         }
     }
 }

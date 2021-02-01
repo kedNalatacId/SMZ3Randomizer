@@ -9,20 +9,27 @@ namespace Randomizer.SuperMetroid.Regions.Brinstar {
         public override string Name => "Brinstar Kraid";
         public override string Area => "Brinstar";
 
-        public Kraid(World world, Logic logic) : base(world, logic) {
+        public Kraid(World world, Config config) : base(world, config) {
+            RegionItems = new[] { CardNorfairL1, CardNorfairL2 };
             Locations = new List<Location> {
-                new Location(this, 43, "Energy Tank, Kraid", LocationType.Hidden, Major, 0x7899C),
-                new Location(this, 48, "Varia Suit", LocationType.Chozo, Major, 0x78ACA),
-                new Location(this, 44, "Missile (Kraid)", LocationType.Hidden, Minor, 0x789EC, Logic switch {
+                new Location(this, 43, 0x8F899C, LocationType.Hidden, "Energy Tank, Kraid", Major, items => items.CardBrinstarBoss),
+                new Location(this, 48, 0x8F8ACA, LocationType.Chozo, "Varia Suit", Major,  items => items.CardBrinstarBoss),
+                new Location(this, 44, 0x8F89EC, LocationType.Hidden, "Missile (Kraid)", Minor, Logic switch {
                     _ => new Requirement(items => items.CanUsePowerBombs())
                 }),
+
+                // new Location(this, 43, "Energy Tank, Kraid", LocationType.Hidden, Major, 0x7899C),
+                // new Location(this, 48, "Varia Suit", LocationType.Chozo, Major, 0x78ACA),
+                // new Location(this, 44, "Missile (Kraid)", LocationType.Hidden, Minor, 0x789EC, Logic switch
             };
         }
 
-        public override bool CanEnter(List<Item> items) {
-            return (items.CanDestroyBombWalls() || items.Has(SpeedBooster)) && items.Has(Super) && items.CanPassBombPassages();
+        public override bool CanEnter(Progression items) {
+            return (items.CanDestroyBombWalls() || items.SpeedBooster) && items.Super && items.CanPassBombPassages();
         }
 
+        public bool CanComplete(Progression items) {
+            return Locations.Get("Varia Suit").Available(items);
+        }
     }
-
 }

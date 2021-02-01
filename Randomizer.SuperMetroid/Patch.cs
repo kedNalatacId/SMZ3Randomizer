@@ -3,19 +3,338 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.IO;
+using static System.Linq.Enumerable;
 using static Randomizer.SuperMetroid.ItemType;
 using System.Text.RegularExpressions;
 
 namespace Randomizer.SuperMetroid {
+    static class KeycardPlaque {
+        public const ushort Level1 = 0xe0;
+        public const ushort Level2 = 0xe1;
+        public const ushort Boss = 0xe2;
+        public const ushort None = 0x00;
+    }
+
+    static class KeycardDoors {
+        public const ushort Left = 0xd414;
+        public const ushort Right = 0xd41a;
+        public const ushort Up = 0xd420;
+        public const ushort Down = 0xd426;
+        public const ushort BossLeft = 0xc842;
+        public const ushort BossRight = 0xc848;
+    }
+
+    static class KeycardEvents {
+        public const ushort CrateriaLevel1 = 0x0000;
+        public const ushort CrateriaLevel2 = 0x0100;
+        public const ushort CrateriaBoss = 0x0200;
+        public const ushort BrinstarLevel1 = 0x0300;
+        public const ushort BrinstarLevel2 = 0x0400;
+        public const ushort BrinstarBoss = 0x0500;
+        public const ushort NorfairLevel1 = 0x0600;
+        public const ushort NorfairLevel2 = 0x0700;
+        public const ushort NorfairBoss = 0x0800;
+        public const ushort MaridiaLevel1 = 0x0900;
+        public const ushort MaridiaLevel2 = 0x0a00;
+        public const ushort MaridiaBoss = 0x0b00;
+        public const ushort WreckedShipLevel1 = 0x0c00;
+        public const ushort WreckedShipBoss = 0x0d00;
+        public const ushort LowerNorfairLevel1 = 0x0e00;
+        public const ushort LowerNorfairBoss = 0x0f00;
+    }
 
     class Patch {
-
         readonly List<World> allWorlds;
         readonly World myWorld;
         readonly string seedGuid;
         readonly int seed;
         readonly Random rnd;
-        Dictionary<int, byte[]> patches;
+        List<(int offset, byte[] bytes)> patches;
+        // Dictionary<int, byte[]> patches;
+
+        public Patch(World myWorld, List<World> allWorlds, string seedGuid, int seed, Random rnd) {
+            this.myWorld = myWorld;
+            this.allWorlds = allWorlds;
+            this.seedGuid = seedGuid;
+            this.seed = seed;
+            this.rnd = rnd;
+        }
+
+        public Dictionary<int, byte[]> Create() {
+            patches = new List<(int, byte[])>();
+
+            WriteLocations(myWorld.Regions.SelectMany(x => x.Locations));
+            WriteKeyCardDoors();
+            WritePlayerNames();
+            WriteSeedData();
+            // WriteItemLocations();
+            // WriteAnimalSurprise();
+            WriteGameTitle();
+            WriteGameModeData();
+            WriteRngBlock();
+
+            return patches.ToDictionary(x => x.offset, x => x.bytes);
+        }
+
+        void WriteRngBlock() {
+            /* Repoint RNG Block */
+            patches.Add((0x420000, Range(0, 1024).Select(x => (byte)rnd.Next(0x100)).ToArray()));
+        }
+
+        private ushort GetSMItemPLM(Location location) {
+            int plmId = myWorld.Config.GameMode == GameMode.Multiworld ?
+                0xEFE0 :
+                location.Item.Type switch {
+                    ETank => 0xEED7,
+                    Missile => 0xEEDB,
+                    Super => 0xEEDF,
+                    PowerBomb => 0xEEE3,
+                    Bombs => 0xEEE7,
+                    Charge => 0xEEEB,
+                    Ice => 0xEEEF,
+                    HiJump => 0xEEF3,
+                    SpeedBooster => 0xEEF7,
+                    Wave => 0xEEFB,
+                    Spazer => 0xEEFF,
+                    SpringBall => 0xEF03,
+                    Varia => 0xEF07,
+                    Plasma => 0xEF13,
+                    Grapple => 0xEF17,
+                    Morph => 0xEF23,
+                    ReserveTank => 0xEF27,
+                    Gravity => 0xEF0B,
+                    XRay => 0xEF0F,
+                    SpaceJump => 0xEF1B,
+                    ScrewAttack => 0xEF1F,
+                    _ => 0xEFE0,
+                };
+
+            plmId += plmId switch {
+                0xEFE0 => location.Type switch {
+                    LocationType.Chozo => 4,
+                    LocationType.Hidden => 8,
+                    _ => 0
+                },
+                _ => location.Type switch {
+                    LocationType.Chozo => 0x54,
+                    LocationType.Hidden => 0xA8,
+                    _ => 0
+                }
+            };
+
+            // return BitConverter.GetBytes((ushort)plmId);
+            return (ushort)plmId;
+        }
+
+        void WriteLocations(IEnumerable<Location> locations) {
+            foreach (var location in locations) {
+                if (myWorld.Config.GameMode == GameMode.Multiworld) {
+                    patches.Add((Snes(location.Address), UshortBytes(GetSMItemPLM(location))));
+                    patches.Add(ItemTablePatch(location, (byte)location.Item.Type));
+                } else {
+                    ushort plmId = GetSMItemPLM(location);
+                    patches.Add((Snes(location.Address), UshortBytes(plmId)));
+                    if (plmId >= 0xEFE0) {
+                        patches.Add((Snes(location.Address + 5), new byte[] { (byte)location.Item.Type }));
+                    }
+                }
+            }
+        }
+
+        (int, byte[]) ItemTablePatch(Location location, byte itemId) {
+            var type = location.Item.World == location.Region.World ? 0 : 1;
+            var owner = location.Item.World.Id;
+            return (0x386000 + (location.Id * 8), new[] { type, itemId, owner, 0 }.SelectMany(UshortBytes).ToArray());
+        }
+
+        void WritePlayerNames() {
+            foreach (var world in allWorlds) {
+                patches.Add((0x1C5000 + (world.Id * 16), PlayerNameBytes(world.Player)));
+            }
+        }
+
+        byte[] PlayerNameBytes(string name) {
+            name = name.Length > 12 ? name[..12] : name;
+            int padding = 12 - name.Length;
+            if (padding > 0) {
+                double pad = padding / 2.0;
+                name = name.PadLeft(name.Length + (int)Math.Ceiling(pad));
+                name = name.PadRight(name.Length + (int)Math.Floor(pad));
+            }
+            return AsAscii(name).Concat(UintBytes(0)).ToArray();
+        }
+
+        void WriteSeedData() {
+            var configField =
+                ((myWorld.Config.Race ? 1 : 0) << 15) |
+                ((myWorld.Config.UseKeycards ? 1 : 0) << 13) |
+                ((myWorld.Config.GameMode == GameMode.Multiworld ? 1 : 0) << 12) |
+                /* Gap of 2 bits, taken by Z3 logic in combo */
+                ((int)myWorld.Config.SMLogic << 8) |
+                (Randomizer.version.Major << 4) |
+                (Randomizer.version.Minor << 0);
+
+            patches.Add((Snes(0x80FF50), UshortBytes(myWorld.Id)));
+            patches.Add((Snes(0x80FF52), UshortBytes(configField)));
+            patches.Add((Snes(0x80FF54), UintBytes(seed)));
+            // Reserve the rest of the space for future use
+            patches.Add((Snes(0x80FF58), Repeat<byte>(0x00, 8).ToArray()));
+            patches.Add((Snes(0x80FF60), AsAscii(seedGuid)));
+            patches.Add((Snes(0x80FF80), AsAscii(myWorld.Guid)));
+        }
+
+        void WriteGameModeData() {
+            if (myWorld.Config.GameMode == GameMode.Multiworld) {
+                patches.Add((Snes(0xF47000), UshortBytes(0x0001)));
+            }
+        }
+
+        /* void WriteItemLocations() {
+            int romAddress = 0x2F5240;
+            foreach (var location in myWorld.Locations.OrderBy(l => l.Region.Name).ThenBy(l => l.Name).Where(l => l.Item.Class == ItemClass.Major)) {
+                patches.Add(romAddress, AsCreditsString(0x04, location.Item.Name, true));
+                patches.Add(romAddress + 0x40, AsCreditsString(0x18, location.Name, false));
+                romAddress += 0x80;
+            }
+
+            patches.Add(romAddress, new byte[] { 0, 0, 0, 0 });
+        } */
+
+        void WriteGameTitle() {
+            var smLogic = myWorld.Config.SMLogic switch
+            {
+                SMLogic.Normal => "N",
+                SMLogic.Medium => "M",
+                _ => "H",
+            };
+            var title = AsAscii($"SM{Randomizer.version}{smLogic}{seed:X8}".PadRight(21)[..21]);
+            // patches.Add(0x007FC0, title);
+            patches.Add((Snes(0x00FFC0), title));
+            patches.Add((Snes(0x80FFC0), title));
+        }
+
+        void WriteKeyCardDoors() {
+            if (!myWorld.Config.UseKeycards)
+                return;
+
+            ushort plaquePLm = 0xd410;
+
+            var doorList = new List<ushort[]> {
+                            // RoomId  Door Facing                yyxx  Keycard Event Type                   Plaque type               yyxx, Address (if 0 a dynamic PLM is created)
+                // Crateria
+                new ushort[] { 0x91F8, KeycardDoors.Right,      0x2601, KeycardEvents.CrateriaLevel1,        KeycardPlaque.Level1,   0x2400, 0x0000 },  // Crateria - Landing Site - Door to gauntlet
+                new ushort[] { 0x91F8, KeycardDoors.Left,       0x168E, KeycardEvents.CrateriaLevel1,        KeycardPlaque.Level1,   0x148F, 0x801E },  // Crateria - Landing Site - Door to landing site PB
+                new ushort[] { 0x948C, KeycardDoors.Left,       0x062E, KeycardEvents.CrateriaLevel2,        KeycardPlaque.Level2,   0x042F, 0x8222 },  // Crateria - Before Moat - Door to moat (overwrite PB door)
+                new ushort[] { 0x99BD, KeycardDoors.Left,       0x660E, KeycardEvents.CrateriaBoss,          KeycardPlaque.Boss,     0x640F, 0x8470 },  // Crateria - Before G4 - Door to G4
+                new ushort[] { 0x9879, KeycardDoors.Left,       0x062E, KeycardEvents.CrateriaBoss,          KeycardPlaque.Boss,     0x042F, 0x8420 },  // Crateria - Before BT - Door to Bomb Torizo
+
+                // Brinstar
+                new ushort[] { 0x9F11, KeycardDoors.Left,       0x060E, KeycardEvents.BrinstarLevel1,        KeycardPlaque.Level1,   0x040F, 0x8784 },  // Brinstar - Blue Brinstar - Door to ceiling e-tank room
+
+                new ushort[] { 0x9AD9, KeycardDoors.Right,      0xA601, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0xA400, 0x0000 },  // Brinstar - Green Brinstar - Door to etecoon area
+                new ushort[] { 0x9D9C, KeycardDoors.Down,       0x0336, KeycardEvents.BrinstarBoss,          KeycardPlaque.Boss,     0x0234, 0x863A },  // Brinstar - Pink Brinstar - Door to spore spawn
+                new ushort[] { 0xA130, KeycardDoors.Left,       0x161E, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0x141F, 0x881C },  // Brinstar - Pink Brinstar - Door to wave gate e-tank
+                new ushort[] { 0xA0A4, KeycardDoors.Left,       0x062E, KeycardEvents.BrinstarLevel2,        KeycardPlaque.Level2,   0x042F, 0x0000 },  // Brinstar - Pink Brinstar - Door to spore spawn super
+
+                new ushort[] { 0xA56B, KeycardDoors.Left,       0x161E, KeycardEvents.BrinstarBoss,          KeycardPlaque.Boss,     0x141F, 0x8A1A },  // Brinstar - Before Kraid - Door to Kraid
+
+                // Upper Norfair
+                new ushort[] { 0xA7DE, KeycardDoors.Right,      0x3601, KeycardEvents.NorfairLevel1,         KeycardPlaque.Level1,   0x3400, 0x8B00 },  // Norfair - Business Centre - Door towards Ice
+                new ushort[] { 0xA923, KeycardDoors.Right,      0x0601, KeycardEvents.NorfairLevel1,         KeycardPlaque.Level1,   0x0400, 0x0000 },  // Norfair - Pre-Crocomire - Door towards Ice
+
+                new ushort[] { 0xA788, KeycardDoors.Left,       0x162E, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x142F, 0x8AEA },  // Norfair - Lava Missile Room - Door towards Bubble Mountain
+                new ushort[] { 0xAF72, KeycardDoors.Left,       0x061E, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x041F, 0x0000 },  // Norfair - After frog speedway - Door to Bubble Mountain
+                new ushort[] { 0xAEDF, KeycardDoors.Down,       0x0206, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x0204, 0x0000 },  // Norfair - Below bubble mountain - Door to Bubble Mountain
+                new ushort[] { 0xAD5E, KeycardDoors.Right,      0x0601, KeycardEvents.NorfairLevel2,         KeycardPlaque.Level2,   0x0400, 0x0000 },  // Norfair - LN Escape - Door to Bubble Mountain
+
+                new ushort[] { 0xA923, KeycardDoors.Up,         0x2DC6, KeycardEvents.NorfairBoss,           KeycardPlaque.Boss,     0x2EC4, 0x8B96 },  // Norfair - Pre-Crocomire - Door to Crocomire
+
+                // Lower Norfair
+                new ushort[] { 0xB4AD, KeycardDoors.Left,       0x160E, KeycardEvents.LowerNorfairLevel1,    KeycardPlaque.Level1,   0x140F, 0x0000 },  // Lower Norfair - WRITG - Door to Amphitheatre
+                new ushort[] { 0xAD5E, KeycardDoors.Left,       0x065E, KeycardEvents.LowerNorfairLevel1,    KeycardPlaque.Level1,   0x045F, 0x0000 },  // Lower Norfair - Exit - Door to "Reverse LN Entry"
+                new ushort[] { 0xB37A, KeycardDoors.Right,      0x0601, KeycardEvents.LowerNorfairBoss,      KeycardPlaque.Boss,     0x0400, 0x8EA6 },  // Lower Norfair - Pre-Ridley - Door to Ridley
+
+                // Maridia
+                new ushort[] { 0xD0B9, KeycardDoors.Left,       0x065E, KeycardEvents.MaridiaLevel1,         KeycardPlaque.Level1,   0x045F, 0x0000 },  // Maridia - Mt. Everest - Door to Pink Maridia
+                new ushort[] { 0xD5A7, KeycardDoors.Right,      0x1601, KeycardEvents.MaridiaLevel1,         KeycardPlaque.Level1,   0x1400, 0x0000 },  // Maridia - Aqueduct - Door towards Beach
+
+                new ushort[] { 0xD617, KeycardDoors.Left,       0x063E, KeycardEvents.MaridiaLevel2,         KeycardPlaque.Level2,   0x043F, 0x0000 },  // Maridia - Pre-Botwoon - Door to Botwoon
+                new ushort[] { 0xD913, KeycardDoors.Right,      0x2601, KeycardEvents.MaridiaLevel2,         KeycardPlaque.Level2,   0x2400, 0x0000 },  // Maridia - Pre-Colloseum - Door to post-botwoon
+
+                new ushort[] { 0xD78F, KeycardDoors.Right,      0x2601, KeycardEvents.MaridiaBoss,           KeycardPlaque.Boss,     0x2400, 0xC73B },  // Maridia - Precious Room - Door to Draygon
+
+                new ushort[] { 0xDA2B, KeycardDoors.BossLeft,   0x164E, 0x00f0, /* Door id 0xf0 */           KeycardPlaque.None,     0x144F, 0x0000 },  // Maridia - Change Cac Alley Door to Boss Door (prevents key breaking)
+
+                // Wrecked Ship
+                new ushort[] { 0x93FE, KeycardDoors.Left,       0x167E, KeycardEvents.WreckedShipLevel1,     KeycardPlaque.Level1,   0x147F, 0x0000 },  // Wrecked Ship - Outside Wrecked Ship West - Door to Reserve Tank Check
+                new ushort[] { 0x968F, KeycardDoors.Left,       0x060E, KeycardEvents.WreckedShipLevel1,     KeycardPlaque.Level1,   0x040F, 0x0000 },  // Wrecked Ship - Outside Wrecked Ship West - Door to Bowling Alley
+                new ushort[] { 0xCE40, KeycardDoors.Left,       0x060E, KeycardEvents.WreckedShipLevel1,     KeycardPlaque.Level1,   0x040F, 0x0000 },  // Wrecked Ship - Gravity Suit - Door to Bowling Alley
+
+                new ushort[] { 0xCC6F, KeycardDoors.Left,       0x064E, KeycardEvents.WreckedShipBoss,       KeycardPlaque.Boss,     0x044F, 0xC29D },  // Wrecked Ship - Pre-Phantoon - Door to Phantoon
+            };
+
+            ushort doorId = 0x0000;
+            int plmTablePos = 0xf800;
+            foreach (var door in doorList) {
+                var doorArgs = door[4] != KeycardPlaque.None ? doorId | door[3] : door[3];
+                if (door[6] == 0) {
+                    // Write dynamic door
+                    var doorData = door[0..3].SelectMany(x => UshortBytes(x)).Concat(UshortBytes(doorArgs)).ToArray();
+                    patches.Add((Snes(0x8f0000 + plmTablePos), doorData));
+                    plmTablePos += 0x08;
+                } else {
+                    // Overwrite existing door
+                    var doorData = door[1..3].SelectMany(x => UshortBytes(x)).Concat(UshortBytes(doorArgs)).ToArray();
+                    patches.Add((Snes(0x8f0000 + door[6]), doorData));
+                    if((door[3] == KeycardEvents.BrinstarBoss && door[0] != 0x9D9C) || door[3] == KeycardEvents.LowerNorfairBoss || door[3] == KeycardEvents.MaridiaBoss || door[3] == KeycardEvents.WreckedShipBoss) {
+                        // Overwrite the extra parts of the Gadora with a PLM that just deletes itself
+                        patches.Add((Snes(0x8f0000 + door[6] + 0x06), new byte[] { 0x2F, 0xB6, 0x00, 0x00, 0x00, 0x00, 0x2F, 0xB6, 0x00, 0x00, 0x00, 0x00 }));
+                    }
+                }
+
+                // Plaque data
+                if (door[4] != KeycardPlaque.None) {
+                    var plaqueData = UshortBytes(door[0]).Concat(UshortBytes(plaquePLm)).Concat(UshortBytes(door[5])).Concat(UshortBytes(door[4])).ToArray();
+                    patches.Add((Snes(0x8f0000 + plmTablePos), plaqueData));
+                    plmTablePos += 0x08;
+                }
+                doorId += 1;
+            }
+
+            patches.Add((Snes(0x8f0000 + plmTablePos), new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }));
+        }
+
+        int Snes(int addr) {
+            addr = addr switch {
+                /* Redirect hi bank $30 access into ExHiRom lo bank $40 */
+                _ when (addr & 0xFF8000) == 0x308000 => 0x400000 | (addr & 0x7FFF),
+                /* General case, add ExHi offset for banks < $80, and collapse mirroring */
+                _ => (addr < 0x800000 ? 0x400000 : 0) | (addr & 0x3FFFFF),
+            };
+            if (addr > 0x600000)
+                throw new InvalidOperationException($"Unmapped pc address target ${addr:X}");
+            return addr;
+        }
+
+        byte[] UintBytes(int value)   => BitConverter.GetBytes((uint)value);
+        byte[] UshortBytes(int value) => BitConverter.GetBytes((ushort)value);
+        byte[] AsAscii(string text)   => Encoding.ASCII.GetBytes(text);
+
+        int BeInt(byte[] bytes) => bytes.Select((x, i) => (x, i)).Aggregate(0, (t, n) => t | (n.x << (8 * (bytes.Length - n.i - 1))));
+
+        byte[] AsCreditsString(int color, string text, bool alignLeft) {
+            var creditsText = Regex.Replace(text.ToUpper(), "[^A-Z0-9\\.,'!: ]+", "");
+            if (alignLeft) {
+                creditsText = " " + creditsText[..Math.Min(creditsText.Length, 30)].PadRight(31, ' ');
+            } else {
+                creditsText = " " + creditsText[..Math.Min(creditsText.Length, 30)].PadLeft(30, '.') + " ";
+            }
+
+            return creditsText.Select(c => new byte[] {
+                c switch { ' ' => 0x7f, '!' => 0x1f, ':' => 0x1e, '\'' => 0x1d, '_' => 0x1c, ',' => 0x1b, '.' => 0x1a, _ => (byte)(c - 0x41) },
+                (byte)(c == ' ' ? 0x00 : color)
+            }).SelectMany(x => x).ToArray();
+        }
 
         #region "Save the animals" patch data
         static readonly Dictionary<string, byte[]> animalPatches = new Dictionary<string, byte[]> {
@@ -161,20 +480,8 @@ namespace Randomizer.SuperMetroid {
                 0x46
             }
         };
-  
-        #endregion 
 
-        public Patch(World myWorld, List<World> allWorlds, string seedGuid, int seed, Random rnd) {
-            this.myWorld = myWorld;
-            this.allWorlds = allWorlds;
-            this.seedGuid = seedGuid;
-            this.seed = seed;
-            this.rnd = rnd;
-        }
-
-        
-        private Dictionary<int, byte[]> ApplyIps(byte[] ipsData) {
-            var patches = new Dictionary<int, byte[]>();
+        private void ApplyIps(byte[] ipsData) {
             using var br = new BinaryReader(new MemoryStream(ipsData));
 
             var patch = new string(br.ReadChars(5));
@@ -186,189 +493,23 @@ namespace Randomizer.SuperMetroid {
             while (!(chunkHeader[0] == 'E' && chunkHeader[1] == 'O' && chunkHeader[2] == 'F')) {
                 var offset = BeInt(chunkHeader);
                 var length = BeInt(br.ReadBytes(2));
-                
+
                 if(length > 0) {
-                    patches.Add(offset, br.ReadBytes(length));
+                    patches.Add((offset, br.ReadBytes(length)));
                 } else {
                     var runLength = BeInt(br.ReadBytes(2));
                     byte runByte = br.ReadByte();
-                    patches.Add(offset, Enumerable.Repeat(runByte, runLength).ToArray());
+                    patches.Add((offset, Enumerable.Repeat(runByte, runLength).ToArray()));
                 }
 
                 chunkHeader = br.ReadBytes(3);
             }
-
-            return patches;
-        }
-
-        private byte[] GetSMItemPLM(Location location) {
-            int plmId = myWorld.Config.GameMode == GameMode.Multiworld ?
-                0xEFE0 :
-                location.Item.Type switch
-                {
-                    ETank => 0xEED7,
-                    Missile => 0xEEDB,
-                    Super => 0xEEDF,
-                    PowerBomb => 0xEEE3,
-                    Bombs => 0xEEE7,
-                    Charge => 0xEEEB,
-                    Ice => 0xEEEF,
-                    HiJump => 0xEEF3,
-                    SpeedBooster => 0xEEF7,
-                    Wave => 0xEEFB,
-                    Spazer => 0xEEFF,
-                    SpringBall => 0xEF03,
-                    Varia => 0xEF07,
-                    Plasma => 0xEF13,
-                    Grapple => 0xEF17,
-                    Morph => 0xEF23,
-                    ReserveTank => 0xEF27,
-                    Gravity => 0xEF0B,
-                    XRay => 0xEF0F,
-                    SpaceJump => 0xEF1B,
-                    ScrewAttack => 0xEF1F,
-                    _ => 0xEFE0,
-                };
-
-            plmId += plmId switch
-            {
-                0xEFE0 => location.Type switch
-                {
-                    LocationType.Chozo => 4,
-                    LocationType.Hidden => 8,
-                    _ => 0
-                },
-                _ => location.Type switch
-                {
-                    LocationType.Chozo => 0x54,
-                    LocationType.Hidden => 0xA8,
-                    _ => 0
-                }
-            };
-
-            return BitConverter.GetBytes((ushort)plmId);
-        }
-
-        public Dictionary<int, byte[]> Create() {
-            patches = new Dictionary<int, byte[]>();
-
-            WriteLocations();
-            WritePlayerNames();
-            WriteSeedData();
-            WriteSeedHash();
-            WriteItemLocations();
-            WriteAnimalSurprise();
-            WriteGameTitle();
-
-            return patches;
-        }
-
-        void WriteLocations() {
-            foreach(var location in myWorld.Locations) {
-                /* Write the correct PLM to the item location */
-                patches.Add(location.Address, GetSMItemPLM(location));
-
-                if (myWorld.Config.GameMode == GameMode.Multiworld) {
-                    /* Write item information to new randomizer item table */
-                    var type = location.Item.World == location.Region.World ? 0 : 1;
-                    var itemId = (byte)location.Item.Type;
-                    var owner = location.Item.World.Id;
-
-                    patches.Add(0x1C6000 + (location.Id * 8), new[] { type, itemId, owner, 0 }.SelectMany(UshortBytes).ToArray());
-                }
-            }
         }
 
         void WriteAnimalSurprise() {
-            patches = patches.Concat(ApplyIps(animalPatches.Values.ElementAt(rnd.Next(animalPatches.Count - 1)))).ToDictionary(p => p.Key, p => p.Value);
+            ApplyIps(animalPatches.Values.ElementAt(rnd.Next(animalPatches.Count - 1)));
         }
 
-        void WritePlayerNames() {
-            foreach (var world in allWorlds) {
-                patches.Add(0x1C5000 + (world.Id * 16), PlayerNameBytes(world.Player));
-            }
-        }
-        
-        byte[] PlayerNameBytes(string name) {
-            name = name.Length > 12 ? name[..12] : name;
-            int padding = 12 - name.Length;
-            if (padding > 0) {
-                double pad = padding / 2.0;
-                name = name.PadLeft(name.Length + (int)Math.Ceiling(pad));
-                name = name.PadRight(name.Length + (int)Math.Floor(pad));
-            }
-            return AsAscii(name.ToUpper()).Concat(UintBytes(0)).ToArray();
-        }
-
-        void WriteSeedData() {
-            var configField =
-                ((myWorld.Config.GameMode == GameMode.Multiworld ? 1 : 0) << 12) |
-                /* Gap of 2 bits, taken by Z3 logic in combo */
-                ((int)myWorld.Config.Logic << 8) |
-                (Randomizer.version.Major << 4) |
-                (Randomizer.version.Minor << 0);
-
-            patches.Add(0x1C4F00, UshortBytes(myWorld.Id));
-            patches.Add(0x1C4F02, UshortBytes(configField));
-            patches.Add(0x1C4F04, UintBytes(seed));
-            /* Reserve the rest of the space for future use */
-            patches.Add(0x1C4F08, Enumerable.Repeat<byte>(0x00, 8).ToArray());
-            patches.Add(0x1C4F10, AsAscii(seedGuid));
-            patches.Add(0x1C4F30, AsAscii(myWorld.Guid));
-
-            if (myWorld.Config.GameMode == GameMode.Multiworld) {
-                /* Write multiworld config flag into the ROM */
-                patches.Add(0x277F00, BitConverter.GetBytes((ushort)1));
-            }
-        }
-
-        void WriteSeedHash() {
-            var seedHash = new byte[4];
-            rnd.NextBytes(seedHash);
-            patches.Add(0x2FFF00, seedHash);
-        }
-
-        void WriteItemLocations() {
-            int romAddress = 0x2F5240;
-            foreach (var location in myWorld.Locations.OrderBy(l => l.Region.Name).ThenBy(l => l.Name).Where(l => l.Item.Class == ItemClass.Major)) {
-                patches.Add(romAddress, AsCreditsString(0x04, location.Item.Name, true));
-                patches.Add(romAddress + 0x40, AsCreditsString(0x18, location.Name, false));
-                romAddress += 0x80;
-            }
-
-            patches.Add(romAddress, new byte[] { 0, 0, 0, 0 });
-        }
-        void WriteGameTitle() {
-            var smLogic = myWorld.Config.Logic switch
-            {
-                Logic.Casual => "C",
-                Logic.Tournament => "T",
-                _ => "C",
-            };
-            var title = AsAscii($"SM{Randomizer.version}{smLogic}{seed:X8}".PadRight(21)[..21]);
-            patches.Add(0x007FC0, title);
-        }
-
-        byte[] UintBytes(int value) => BitConverter.GetBytes((uint)value);
-
-        byte[] UshortBytes(int value) => BitConverter.GetBytes((ushort)value);
-
-        byte[] AsAscii(string text) => Encoding.ASCII.GetBytes(text);
-
-        int BeInt(byte[] bytes) => bytes.Select((x, i) => (x, i)).Aggregate(0, (t, n) => t | (n.x << (8 * (bytes.Length - n.i - 1))));
-
-        byte[] AsCreditsString(int color, string text, bool alignLeft) {
-            var creditsText = Regex.Replace(text.ToUpper(), "[^A-Z0-9\\.,'!: ]+", "");
-            if (alignLeft) {
-                creditsText = " " + creditsText[..Math.Min(creditsText.Length, 30)].PadRight(31, ' ');
-            } else {
-                creditsText = " " + creditsText[..Math.Min(creditsText.Length, 30)].PadLeft(30, '.') + " ";
-            }
-            
-            return creditsText.Select(c => new byte[] {
-                c switch { ' ' => 0x7f, '!' => 0x1f, ':' => 0x1e, '\'' => 0x1d, '_' => 0x1c, ',' => 0x1b, '.' => 0x1a, _ => (byte)(c - 0x41) },
-                (byte)(c == ' ' ? 0x00 : color)
-            }).SelectMany(x => x).ToArray();
-        }
+        #endregion
     }
 }

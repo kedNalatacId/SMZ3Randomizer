@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Randomizer.SuperMetroid {
     class Playthrough {
@@ -15,40 +16,60 @@ namespace Randomizer.SuperMetroid {
 
         public List<Dictionary<string, string>> Generate() {
             var spheres = new List<Dictionary<string, string>>();
-
+            var locations = new List<Location>();
             var items = new List<Item>();
-            var prevCount = 0;
-            while (items.Count < worlds.SelectMany(w => w.Items).Count()) {
+            
+            foreach (var world in worlds) {
+                if (!world.Config.UseKeycards) {
+                    items.AddRange(Item.CreateKeycards(world));
+                }
+            }
+
+            var totalItemCount = worlds.SelectMany(w => w.Items).Count();
+            while (items.Count < totalItemCount) {
                 var sphere = new Dictionary<string, string>();
-                var newLocations = worlds.SelectMany(w => w.Locations.Available(items.Where(i => i.World == w).ToList())).ToList();
+
+                var allLocations = worlds.SelectMany(w => w.Locations.Available(items.Where(i => i.World == w)));
+                var newLocations = allLocations.Except(locations).ToList();
                 var newItems = newLocations.Select(l => l.Item).ToList();
-                var addedItems = newItems.Where(i => !items.Contains(i)).ToList();
-                if (prevCount == newItems.Count) {
-                    /* No new items added, we got a problem */
-                    var inaccessibleLocations = worlds.SelectMany(x => x.Locations).Where(l => !newLocations.Contains(l)).ToList();
-                    var unplacedItems = inaccessibleLocations.Select(x => x.Item).ToList();
-                    throw new Exception("Could not generate playthrough, all items are not accessible");
+                locations.AddRange(newLocations);
+                items.AddRange(newItems);
+
+                if (!newItems.Any()) {
+                    /* With no new items added we might have a problem, so list inaccessable items */
+                    var inaccessibleLocations = worlds.SelectMany(w => w.Locations).Where(l => !locations.Contains(l)).ToList();
+                    if (inaccessibleLocations.Select(l => l.Item).Count() >= (15 * worlds.Count))
+                        throw new Exception("Too many inaccessible items, seed likely impossible.");
+
+                    var n = 0;
+                    foreach (var location in inaccessibleLocations) {
+                        if (config.GameMode == GameMode.Multiworld) {
+                            sphere.Add($"Inaccessible Item #{n += 1}: {location.Name} ({location.Region.World.Player})", $"{location.Item.Name} ({location.Item.World.Player})");
+                        }
+                        else {
+                            sphere.Add($"Inaccessible Item #{n += 1}: {location.Name}", $"{location.Item.Name}");
+                        }
+                    }
+                    spheres.Add(sphere);
+                    break;
                 }
 
-                prevCount = newItems.Count;
-                foreach (var addedItem in addedItems.Where(i =>
-                     i.Name.Contains("Progression") ||
-                     (i.Type != ItemType.Missile &&
-                      i.Type != ItemType.Super &&
-                      i.Type != ItemType.PowerBomb &&
-                      i.Type != ItemType.ETank &&
-                      i.Type != ItemType.ReserveTank)
-                )) {
-                    var itemLocation = newLocations.Where(l => l.Item == addedItem).First();
+                foreach (var location in newLocations) {
+                    if ((config.UseKeycards && !location.Item.Progression && !location.Item.IsKeycard) || (!config.UseKeycards && !location.Item.Progression))
+                        continue;
+
                     if (config.GameMode == GameMode.Multiworld) {
-                        sphere.Add($"{itemLocation.Name} ({itemLocation.Region.World.Player})", $"{addedItem.Name} ({addedItem.World.Player})");
-                    } else {
-                        sphere.Add($"{itemLocation.Name}", $"{addedItem.Name}");
+                        sphere.Add($"{location.Name} ({location.Region.World.Player})", $"{location.Item.Name} ({location.Item.World.Player})");
+                    }
+                    else {
+                        sphere.Add($"{location.Name}", $"{location.Item.Name}");
                     }
                 }
 
                 spheres.Add(sphere);
-                items = newItems;
+
+                if (spheres.Count > 100)
+                    throw new Exception("Too many spheres, seed likely impossible.");
             }
 
             return spheres;

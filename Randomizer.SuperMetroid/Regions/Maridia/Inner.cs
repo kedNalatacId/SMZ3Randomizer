@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using static Randomizer.SuperMetroid.ItemType;
-using static Randomizer.SuperMetroid.Logic;
+using static Randomizer.SuperMetroid.SMLogic;
 using static Randomizer.SuperMetroid.LocationType;
 using static Randomizer.SuperMetroid.ItemClass;
 
@@ -11,88 +11,145 @@ namespace Randomizer.SuperMetroid.Regions.Maridia {
         public override string Name => "Maridia Inner";
         public override string Area => "Maridia";
 
-        public Inner(World world, Logic logic) : base(world, logic) {
+        public Inner(World world, Config config) : base(world, config) {
+            RegionItems = new[] { CardMaridiaL2, CardMaridiaBoss };
+
             Locations = new List<Location> {
-                new Location(this, 140, "Super Missile (yellow Maridia)", Visible, Minor, 0x7C4AF, Logic switch {
-                    Casual => items => items.CanPassBombPassages(),
-                    _ => new Requirement(items => items.CanPassBombPassages() &&
-                        (items.Has(Gravity) || items.Has(Ice) || items.Has(HiJump) && items.CanSpringBallJump()))
+                new Location(this, 140, 0x8FC4AF, LocationType.Visible, "Super Missile (yellow Maridia)", Minor, Logic switch {
+                    Normal => items => items.CardMaridiaL1 && items.CanPassBombPassages(),
+                    _ => new Requirement(items => items.CardMaridiaL1 && items.CanPassBombPassages() &&
+                        (items.Gravity || items.Ice || items.HiJump && items.CanSpringBallJump()))
                 }),
-                new Location(this, 141, "Missile (yellow Maridia super missile)", Visible, Minor, 0x7C4B5, Logic switch {
-                    Casual => items => items.CanPassBombPassages(),
-                    _ => new Requirement(items => items.CanPassBombPassages() &&
-                        (items.Has(Gravity) || items.Has(Ice) || items.Has(HiJump) && items.CanSpringBallJump()))
+                // new Location(this, 140, "Super Missile (yellow Maridia)", Visible, Minor, 0x7C4AF, Logic switch
+
+                new Location(this, 141, 0x8FC4B5, LocationType.Visible, "Missile (yellow Maridia super missile)", Minor, Logic switch {
+                    Normal => items => items.CardMaridiaL1 && items.CanPassBombPassages(),
+                    _ => new Requirement(items => items.CardMaridiaL1 && items.CanPassBombPassages() &&
+                        (items.Gravity || items.Ice || items.HiJump && items.CanSpringBallJump()))
                 }),
-                new Location(this, 142, "Missile (yellow Maridia false wall)", Visible, Minor, 0x7C533, Logic switch {
-                    Casual => items => items.CanPassBombPassages(),
-                    _ => new Requirement(items => items.CanPassBombPassages() &&
-                        (items.Has(Gravity) || items.Has(Ice) || items.Has(HiJump) && items.CanSpringBallJump()))
+                // new Location(this, 141, "Missile (yellow Maridia super missile)", Visible, Minor, 0x7C4B5, Logic switch
+
+                new Location(this, 142, 0x8FC533, LocationType.Visible, "Missile (yellow Maridia false wall)", Minor, Logic switch {
+                    Normal => items => items.CardMaridiaL1 && items.CanPassBombPassages(),
+                    _ => new Requirement(items => items.CardMaridiaL1 && items.CanPassBombPassages() &&
+                        (items.Gravity || items.Ice || items.HiJump && items.CanSpringBallJump()))
                 }),
-                new Location(this, 143, "Plasma Beam", Chozo, Major, 0x7C559, Logic switch {
-                    Casual => items => items.CanDefeatDraygon(Logic) && (items.Has(ScrewAttack) || items.Has(Plasma)) &&
-                        (items.Has(HiJump) || items.CanFly()),
-                    _ => new Requirement(items => items.CanDefeatDraygon(Logic) &&
-                        (items.Has(Charge) && items.HasEnergyReserves(3) || items.Has(ScrewAttack) || items.Has(Plasma) || items.Has(SpeedBooster)) &&
-                        (items.Has(HiJump) || items.CanSpringBallJump() || items.CanFly() || items.Has(SpeedBooster)))
+                // new Location(this, 142, "Missile (yellow Maridia false wall)", Visible, Minor, 0x7C533, Logic switch
+
+                new Location(this, 143, 0x8FC559, LocationType.Chozo, "Plasma Beam", Major, Logic switch {
+                    Normal => items => CanDefeatDraygon(items) && (items.ScrewAttack || items.Plasma) && items.SpaceJump,
+                    Medium => items => CanDefeatDraygon(items) && (items.ScrewAttack || items.Plasma) && (items.HiJump || items.CanFly()),
+                    _ => new Requirement(items => CanDefeatDraygon(items) &&
+                        (items.Charge && items.HasEnergyReserves(3) || items.ScrewAttack || items.Plasma || items.SpeedBooster) &&
+                        (items.HiJump || items.CanSpringBallJump() || items.CanFly() || items.SpeedBooster))
                 }),
-                new Location(this, 144, "Missile (left Maridia sand pit room)", Visible, Minor, 0x7C5DD, Logic switch {
-                    Casual => items => items.CanPassBombPassages(),
-                    _ => new Requirement(items => items.Has(HiJump) && (items.Has(SpaceJump) || items.CanSpringBallJump()) || items.Has(Gravity))
+                // new Location(this, 143, "Plasma Beam", Chozo, Major, 0x7C559, Logic switch
+
+                new Location(this, 144, 0x8FC5DD, LocationType.Visible, "Missile (left Maridia sand pit room)", Minor, Logic switch {
+                    Normal => items => CanReachAqueduct(items) && items.Super && items.CanPassBombPassages(),
+                    _ => new Requirement(items => CanReachAqueduct(items) && items.Super &&
+                        (items.HiJump && (items.SpaceJump || items.CanSpringBallJump()) || items.Gravity))
                 }),
-                new Location(this, 145, "Reserve Tank, Maridia", Chozo, Major, 0x7C5E3, Logic switch {
-                    Casual => items => items.CanPassBombPassages(),
-                    _ => new Requirement(items => items.Has(HiJump) && (items.Has(SpaceJump) || items.CanSpringBallJump()) || items.Has(Gravity))
+                // new Location(this, 144, "Missile (left Maridia sand pit room)", Visible, Minor, 0x7C5DD, Logic switch
+
+                new Location(this, 145, 0x8FC5E3, LocationType.Chozo, "Reserve Tank, Maridia", Major, Logic switch {
+                    Normal => items => CanReachAqueduct(items) && items.Super && items.CanPassBombPassages(),
+                    _ => new Requirement(items => CanReachAqueduct(items) && items.Super &&
+                        (items.HiJump && (items.SpaceJump || items.CanSpringBallJump()) || items.Gravity))
                 }),
-                new Location(this, 146, "Missile (right Maridia sand pit room)", Visible, Minor, 0x7C5EB, Logic switch {
-                    Casual => new Requirement(items => true),
-                    _ => items => items.Has(HiJump) || items.Has(Gravity)
+                // new Location(this, 145, "Reserve Tank, Maridia", Chozo, Major, 0x7C5E3, Logic switch
+
+                new Location(this, 146, 0x8FC5EB, LocationType.Visible, "Missile (right Maridia sand pit room)", Minor, Logic switch {
+                    Normal => new Requirement(items => CanReachAqueduct(items) && items.Super),
+                    _ => items => CanReachAqueduct(items) && items.Super && (items.HiJump || items.Gravity)
                 }),
-                new Location(this, 147, "Power Bomb (right Maridia sand pit room)", Visible, Minor, 0x7C5F1, Logic switch {
-                    Casual => new Requirement(items => true),
-                    _ => items => items.Has(HiJump) && items.CanSpringBallJump() || items.Has(Gravity)
+                // new Location(this, 146, "Missile (right Maridia sand pit room)", Visible, Minor, 0x7C5EB, Logic switch
+
+                new Location(this, 147, 0x8FC5F1, LocationType.Visible, "Power Bomb (right Maridia sand pit room)", Minor, Logic switch {
+                    Normal => new Requirement(items => CanReachAqueduct(items) && items.Super),
+                    _ => items => CanReachAqueduct(items) && items.Super && (items.HiJump && items.CanSpringBallJump() || items.Gravity)
                 }),
-                new Location(this, 148, "Missile (pink Maridia)", Visible, Minor, 0x7C603, Logic switch {
-                    Casual => items => items.Has(SpeedBooster),
-                    _ => new Requirement(items => items.Has(Gravity))
+                // new Location(this, 147, "Power Bomb (right Maridia sand pit room)", Visible, Minor, 0x7C5F1, Logic switch
+
+                new Location(this, 148, 0x8FC603, LocationType.Visible, "Missile (pink Maridia)", Minor, Logic switch {
+                    Hard => items => CanReachAqueduct(items) && items.Gravity,
+                    _ => new Requirement(items => CanReachAqueduct(items) && items.Gravity && items.SpeedBooster)
                 }),
-                new Location(this, 149, "Super Missile (pink Maridia)", Visible, Minor, 0x7C609, Logic switch {
-                    Casual => items => items.Has(SpeedBooster),
-                    _ => new Requirement(items => items.Has(Gravity))
+                // new Location(this, 148, "Missile (pink Maridia)", Visible, Minor, 0x7C603, Logic switch
+
+                new Location(this, 149, 0x8FC609, LocationType.Visible, "Super Missile (pink Maridia)", Minor, Logic switch {
+                    Hard => items => CanReachAqueduct(items) && items.Gravity,
+                    _ => new Requirement(items => CanReachAqueduct(items) && items.SpeedBooster)
                 }),
-                new Location(this, 150, "Spring Ball", Chozo, Major, 0x7C6E5, Logic switch {
-                    Casual => items => items.Has(Grapple) && items.CanUsePowerBombs() && (items.Has(SpaceJump) || items.Has(HiJump)),
-                    _ => new Requirement(items => items.Has(Grapple) && items.CanUsePowerBombs() && (
-                        items.Has(Gravity) && (items.CanFly() || items.Has(HiJump)) ||
-                        items.Has(Ice) && items.Has(HiJump) && items.CanSpringBallJump() && items.Has(SpaceJump)))
+                // new Location(this, 149, "Super Missile (pink Maridia)", Visible, Minor, 0x7C609, Logic switch
+
+                new Location(this, 150, 0x8FC6E5, LocationType.Chozo, "Spring Ball", Major, Logic switch {
+                    Normal => items => items.Super && items.Grapple && items.CanUsePowerBombs() && (items.SpaceJump || items.HiJump),
+                    Medium => items => items.Super && items.Grapple && items.CanUsePowerBombs() && (items.CanFly() || items.HiJump),
+                    _ => new Requirement(items => items.Super && items.Grapple && items.CanUsePowerBombs() && (
+                        items.Gravity && (items.CanFly() || items.HiJump) ||
+                        items.Ice && items.HiJump && items.CanSpringBallJump() && items.SpaceJump))
                 }),
-                new Location(this, 151, "Missile (Draygon)", Hidden, Minor, 0x7C74D, Logic switch {
-                    Casual => items => items.CanDefeatBotwoon(Logic),
-                    _ => new Requirement(items => items.CanDefeatBotwoon(Logic) && items.Has(Gravity))
+                // new Location(this, 150, "Spring Ball", Chozo, Major, 0x7C6E5, Logic switch
+
+                new Location(this, 151, 0x8FC74D, LocationType.Hidden, "Missile (Draygon)", Minor, Logic switch {
+                    Normal => items => items.CardMaridiaL1 && items.CardMaridiaL2 && CanDefeatBotwoon(items),
+                    _ => new Requirement(items => (items.CardMaridiaL1 && items.CardMaridiaL2 && CanDefeatBotwoon(items)) && items.Gravity)
                 }),
-                new Location(this, 152, "Energy Tank, Botwoon", Visible, Major, 0x7C755, Logic switch {
-                    _ => new Requirement(items => items.CanDefeatBotwoon(Logic) && (items.Has(Gravity) || items.Has(Ice)))
+                // new Location(this, 151, "Missile (Draygon)", Hidden, Minor, 0x7C74D, Logic switch
+
+                new Location(this, 152, 0x8FC755, LocationType.Visible, "Energy Tank, Botwoon", Major, Logic switch {
+                    _ => new Requirement(items => items.CardMaridiaL1 && items.CardMaridiaL2 && CanDefeatBotwoon(items))
                 }),
-                new Location(this, 154, "Space Jump", Chozo, Major, 0x7C7A7, Logic switch {
-                    Casual => items => items.CanDefeatDraygon(Logic),
-                    _ => new Requirement(items => items.CanDefeatDraygon(Logic) &&
-                        (items.CanFly() || items.Has(SpeedBooster) && items.Has(HiJump)))
+                // new Location(this, 152, "Energy Tank, Botwoon", Visible, Major, 0x7C755, Logic switch
+
+                new Location(this, 154, 0x8FC7A7, LocationType.Chozo, "Space Jump", Major, Logic switch {
+                    _ => new Requirement(items => CanDefeatDraygon(items))
                 })
+                // new Location(this, 154, "Space Jump", Chozo, Major, 0x7C7A7, Logic switch
             };
         }
 
-        public override bool CanEnter(List<Item> items) {
-            return Logic switch
-            {
-                Casual =>
-                    World.CanEnter("Norfair Upper West", items) && items.CanUsePowerBombs() &&
-                    (items.CanFly() || items.Has(SpeedBooster) || items.Has(Grapple)) && items.Has(Gravity),
+        bool CanReachAqueduct(Progression items) {
+            return items.CardMaridiaL1;
+        }
+
+        bool CanDefeatDraygon(Progression items) {
+            return Logic switch {
+                Normal => items.CardMaridiaL1 && items.CardMaridiaL2 && CanDefeatBotwoon(items) &&
+                    items.CardMaridiaBoss && items.Gravity && items.SpaceJump,
+                Medium => items.CardMaridiaL1 && items.CardMaridiaL2 && CanDefeatBotwoon(items) &&
+                    items.CardMaridiaBoss && items.Gravity && (items.SpeedBooster && items.HiJump || items.CanFly()),
+                _ => items.CardMaridiaL1 && items.CardMaridiaL2 && CanDefeatBotwoon(items) &&
+                    items.CardMaridiaBoss && items.Gravity
+            };
+        }
+
+        bool CanDefeatBotwoon(Progression items) {
+            return Logic switch {
+                Hard => items.Ice || items.SpeedBooster && items.Gravity,
+                _ => items.SpeedBooster && items.Gravity
+            };
+        }
+
+        public override bool CanEnter(Progression items) {
+            return Logic switch {
+                Normal => items.Gravity && (
+                    World.CanEnter("Norfair Upper West", items) && items.Super && items.CanUsePowerBombs() &&
+                        (items.SpaceJump || items.SpeedBooster || items.Grapple)
+                ),
+                Medium => items.Gravity && (
+                    World.CanEnter("Norfair Upper West", items) && items.Super && items.CanUsePowerBombs() &&
+                        (items.CanFly() || items.SpeedBooster || items.Grapple)
+                ),
                 _ =>
-                    World.CanEnter("Norfair Upper West", items) && items.CanUsePowerBombs() &&
-                        (items.Has(Gravity) ||
-                        (items.Has(HiJump) && (items.Has(Ice) || items.CanSpringBallJump()) && items.Has(Grapple)))
+                    items.Super && World.CanEnter("Norfair Upper West", items) && items.CanUsePowerBombs() &&
+                        (items.Gravity || items.HiJump && (items.Ice || items.CanSpringBallJump()) && items.Grapple)
             };
         }
 
+        public bool CanComplete(Progression items) {
+            return Locations.Get("Space Jump").Available(items);
+        }
     }
-
 }

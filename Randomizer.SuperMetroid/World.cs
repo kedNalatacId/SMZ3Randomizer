@@ -8,11 +8,14 @@ namespace Randomizer.SuperMetroid {
 
         public List<Location> Locations { get; set; }
         public List<Region> Regions { get; set; }
-        public List<Item> Items { get; set; }
         public Config Config { get; set; }
         public string Player { get; set; }
         public string Guid { get; set; }
         public int Id { get; set; }
+
+        public IEnumerable<Item> Items {
+            get { return Locations.Select(l => l.Item).Where(i => i != null); }
+        }
 
         public World(Config config, string player, int id, string guid) {
             Id = id;
@@ -21,36 +24,32 @@ namespace Randomizer.SuperMetroid {
             Guid = guid;
 
             Regions = new List<Region> {
-                new Regions.Crateria.Central(this, Config.Logic),
-                new Regions.Crateria.West(this, Config.Logic),
-                new Regions.Crateria.East(this, Config.Logic),
-                new Regions.Brinstar.Blue(this, Config.Logic),
-                new Regions.Brinstar.Green(this, Config.Logic),
-                new Regions.Brinstar.Kraid(this, Config.Logic),
-                new Regions.Brinstar.Pink(this, Config.Logic),
-                new Regions.Brinstar.Red(this, Config.Logic),
-                new Regions.Maridia.Outer(this, Config.Logic),
-                new Regions.Maridia.Inner(this, Config.Logic),
-                new Regions.NorfairUpper.West(this, Config.Logic),
-                new Regions.NorfairUpper.East(this, Config.Logic),
-                new Regions.NorfairUpper.Crocomire(this, Config.Logic),
-                new Regions.NorfairLower.West(this, Config.Logic),
-                new Regions.NorfairLower.East(this, Config.Logic),
-                new Regions.WreckedShip(this, Config.Logic)
+                new Regions.Crateria.Central(this, Config),
+                new Regions.Crateria.West(this, Config),
+                new Regions.Crateria.East(this, Config),
+                new Regions.Brinstar.Blue(this, Config),
+                new Regions.Brinstar.Green(this, Config),
+                new Regions.Brinstar.Kraid(this, Config),
+                new Regions.Brinstar.Pink(this, Config),
+                new Regions.Brinstar.Red(this, Config),
+                new Regions.Maridia.Outer(this, Config),
+                new Regions.Maridia.Inner(this, Config),
+                new Regions.NorfairUpper.West(this, Config),
+                new Regions.NorfairUpper.East(this, Config),
+                new Regions.NorfairUpper.Crocomire(this, Config),
+                new Regions.NorfairLower.West(this, Config),
+                new Regions.NorfairLower.East(this, Config),
+                new Regions.WreckedShip(this, Config)
             };
 
             Locations = Regions.SelectMany(x => x.Locations).ToList();
-            Items = new List<Item>();
         }
 
-        internal bool CanEnter(string regionName, List<Item> items) {
+        public bool CanEnter(string regionName, Progression items) {
             var region = Regions.Find(r => r.Name == regionName);
-            if (region != null)
-                return region.CanEnter(items);
-            else
-                throw new ArgumentException("World.CanEnter: Invalid region name " + regionName);
+            if (region == null)
+                throw new ArgumentException($"World.CanEnter: Invalid region name {regionName}", nameof(regionName));
+            return region.CanEnter(items);
         }
-
     }
-
 }
