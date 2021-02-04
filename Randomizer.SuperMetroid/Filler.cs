@@ -87,44 +87,6 @@ namespace Randomizer.SuperMetroid {
                    orderby location.i select location.x;
         }
 
-        /* public void PriorityFill(IList<ItemType> itemTypes, List<Item> items, List<Item> initialItems, List<World> worlds) {
-            var assumedItems = new List<Item>(items.Where(x => !itemTypes.Contains(x.Type)));
-            var priorityItems = new List<Item>(items.Where(x => itemTypes.Contains(x.Type)));
-            var locations = worlds.SelectMany(w => w.Locations).ToList().Empty();
-
-            // Place items until priority item pool is empty
-            while (priorityItems.Count > 0) {
-
-                // Get a candidate item from the pool
-                var itemToPlace = priorityItems.Shuffle(Rnd).First();
-
-                // Remove it from the pool
-                priorityItems.Remove(itemToPlace);
-
-                // Get a location
-                var inventory = CollectItems(assumedItems.Concat(initialItems).ToList(), worlds).ToList();
-                var locationsToPlace = Config.Placement switch {
-                    Placement.Split => locations.Where(x => x.Class == itemToPlace.Class).ToList().CanFillWithinWorld(itemToPlace, inventory),
-                    _ => locations.CanFillWithinWorld(itemToPlace, inventory)
-                };
-
-                if (locationsToPlace.Count == 0) {
-                    priorityItems.Add(itemToPlace);
-                    continue;
-                }
-
-                var locationToPlace = locationsToPlace.Shuffle(Rnd).First();
-
-                // Get the world from the location
-                var world = locationToPlace.Region.World;
-
-                // Place item at location
-                locationToPlace.Item = itemToPlace;
-                items.Remove(itemToPlace);
-                locations.Remove(locationToPlace);
-            }
-        } */
-
         void AssumedFill(List<Item> itemPool, List<Item> baseItems, IEnumerable<Location> locations, IEnumerable<World> worlds) {
             var assumedItems = new List<Item>(itemPool);
             int fail_counter = 0;
@@ -175,25 +137,6 @@ namespace Randomizer.SuperMetroid {
                 items.Remove(item);
             }
         }
-/* There are no major items in nice or junk (anymore); can fill them anywhere
-            while (items.Count > 0) {
-                var item = items.Shuffle(Rnd).First();
-                var location = Config.Placement switch
-                {
-                    Placement.Split => worlds.SelectMany(x => x.Locations.Where(x => x.Class == item.Class).ToList().Empty()).ToList().Shuffle(Rnd).FirstOrDefault(),
-                    _ => worlds.SelectMany(x => x.Locations.Empty()).ToList().Shuffle(Rnd).FirstOrDefault()
-                };
-
-                if (location != null) {
-                    location.Item = item;
-                    items.Remove(item);
-                }
-                else {
-                    throw new Exception("Tried to fill item: " + item.Name + ", but no locations was available");
-                }
-            }
-        }
-*/
 
         void InitialFillInOwnWorld(List<Item> progressionItems, World world) {
             if (Config.MorphLocation == MorphLocation.Original)
@@ -222,25 +165,25 @@ namespace Randomizer.SuperMetroid {
                 FrontFillItemInWorld(world, progressionItems, ItemType.PowerBomb, true);
             }
 
-/*  WIP     if (choice != 1 && Config.MorphLocation == MorphLocation.Early)
-                FrontFillItemInWorld(world, progressionItems, ItemType.Morph, true);
-
-            if (!Config.LiveDangerously)
-                FrontFillItemInWorld(world, progressionItems, Rnd.Next(2) == 0 ? ItemType.Missile : ItemType.Super, true);
+            FrontFillItemInWorld(world, progressionItems, Rnd.Next(2) == 0 ? ItemType.Missile : ItemType.Super, true);
 
             // With split placement, we'll run into problem with placement if progression minors aren't available from the start
             if (Config.Placement == Placement.Split) {
                 // If missile was placed, also place a super
-                if (world.Locations.Filled().Where(l => l.ItemIs(Super, world)).ToList().Count == 0) {
+                // This is about as much as LiveDangerously can effect without seriously causing logic issues
+                if (world.Locations.Filled().Where(l => l.ItemIs(ItemType.Super, world)).ToList().Count == 0 && !Config.LiveDangerously) {
                     FrontFillItemInWorld(world, progressionItems, ItemType.Super, true);
                 }
 
                 // If no power bomb was placed, place one
-                if (world.Locations.Filled().Where(l => l.ItemIs(PowerBomb, world)).ToList().Count == 0) {
+                if (world.Locations.Filled().Where(l => l.ItemIs(ItemType.PowerBomb, world)).ToList().Count == 0) {
                     FrontFillItemInWorld(world, progressionItems, ItemType.PowerBomb, true);
                 }
             }
-ENDWIP */
+
+            // if they said early morph, place it now; it'll happen soon anyway...
+            if (choice != 1 && Config.MorphLocation == MorphLocation.Early)
+                FrontFillItemInWorld(world, progressionItems, ItemType.Morph, true);
         }
 
         private void FrontFillItemInWorld(World world, List<Item> itemPool, ItemType itemType, bool restrictWorld = false) {
@@ -256,21 +199,8 @@ ENDWIP */
                 locationToFill.Item = item;
                 itemPool.Remove(item);
             } else {
-                throw new Exception("No location to place item:" + item.Name);
-            }
-        }
-
-        private bool CanPlaceAtLocation(Location location, ItemType itemType) {
-            if (Config.GameMode == GameMode.Normal) {
-                return itemType switch {
-                    ItemType.Gravity => (!(location.Region.Area == "Crateria" || location.Region.Area == "Brinstar")) || location.Name == "X-Ray Scope" || location.Name == "Energy Tank, Waterway",
-                    ItemType.Varia => (!(location.Region.Area == "LowerNorfair" || location.Region.Area == "Crateria" || location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling")),
-                    ItemType.SpeedBooster => !(location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling"),
-                    ItemType.ScrewAttack => !(location.Name == "Morphing Ball" || location.Name == "Missile (blue Brinstar middle)" || location.Name == "Energy Tank, Brinstar Ceiling"),
-                    _ => true
-                };
-            } else {
-                return true;
+// It's not needed to throw this; if we fail to fill the world we'll throw a different (catchable) error later
+//              throw new Exception("No location to place item:" + item.Name);
             }
         }
 
