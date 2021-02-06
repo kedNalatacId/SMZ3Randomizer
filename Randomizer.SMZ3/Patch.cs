@@ -571,12 +571,14 @@ namespace Randomizer.SMZ3 {
 
             // Write myWorld.Player name to local save file while we're here; TODO -- make better
             //   possibly import ALTTPRs extended file select screen?
-            patches.Add((Snes(0x5e03fa), FileSelectPlayerNameBytes(myWorld.Player)));
-            if (myWorld.Player.Length > 4) {
-                patches.Add((Snes(0x5e08fa), FileSelectPlayerNameBytes(myWorld.Player[4..])));
-            }
-            if (myWorld.Player.Length > 8) {
-                patches.Add((Snes(0x5e0dfa), FileSelectPlayerNameBytes(myWorld.Player[8..])));
+            if (myWorld.Player != "Player") {
+                patches.Add((Snes(0x5e03fa), FileSelectPlayerNameBytes(myWorld.Player)));
+                if (myWorld.Player.Length > 4) {
+                    patches.Add((Snes(0x5e08fa), FileSelectPlayerNameBytes(myWorld.Player[4..])));
+                }
+                if (myWorld.Player.Length > 8) {
+                    patches.Add((Snes(0x5e0dfa), FileSelectPlayerNameBytes(myWorld.Player[8..])));
+                }
             }
         }
 

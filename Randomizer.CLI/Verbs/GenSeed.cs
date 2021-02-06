@@ -26,7 +26,7 @@ namespace Randomizer.CLI.Verbs {
             { "MysterySeed", false },
             { "OutputFile", "" },
             { "Patch", false },
-            { "PlayerName", "Player-1" },
+            { "PlayerName", "Player" },
             { "Players", 1 },
             { "Playthrough", false },
             { "PythonBin", "python" },

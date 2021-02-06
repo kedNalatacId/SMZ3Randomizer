@@ -22,16 +22,19 @@ namespace Randomizer.SMZ3 {
         static Regex alphaNumeric = new Regex(@"[A-Z\d]", RegexOptions.IgnoreCase);
 
         public List<IRandomizerOption> Options => new List<IRandomizerOption> {
-            Config.GetRandomizerOption<SMLogic>("Super Metroid Logic"),
-            Config.GetRandomizerOption<Goal>("Goal"),
-            //Config.GetRandomizerOption<Z3Logic>("A Link to the Past Logic"),
-            Config.GetRandomizerOption<SwordLocation>("First Sword"),
-            Config.GetRandomizerOption<MorphLocation>("Morph Ball"),
-            Config.GetRandomizerOption<KeyShuffle>("Key shuffle"),
-            Config.GetRandomizerOption<Keycards>("Keycards"),
+            Config.GetRandomizerOption("MysterySeed", "Mystery Seed", false),
             new RandomizerOption {
                 Key = "seed", Description = "Seed", Type = Seed
             },
+            Config.GetRandomizerOption<SMLogic>("Super Metroid Logic"),
+            Config.GetRandomizerOption<Z3Logic>("A Link to the Past Logic"),
+            Config.GetRandomizerOption<KeyShuffle>("Key shuffle"),
+            Config.GetRandomizerOption<Keycards>("Keycards"),
+            Config.GetRandomizerOption<Goal>("Goal"),
+            Config.GetRandomizerOption<SwordLocation>("First Sword"),
+            Config.GetRandomizerOption<MorphLocation>("Morph Ball"),
+            Config.GetRandomizerOption<BottleContents>("Bottle Contents"),
+            Config.GetRandomizerOption("RandomFlyingTiles", "Random Flying Tiles", false),
             Config.GetRandomizerOption("Race", "Race ROM (no spoilers)", false),
             Config.GetRandomizerOption<GameMode>("Game mode"),
 
