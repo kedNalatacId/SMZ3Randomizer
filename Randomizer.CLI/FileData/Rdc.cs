@@ -255,7 +255,8 @@ namespace Randomizer.CLI.FileData {
                 z3_sprites = Directory.GetFiles(Path.Combine(SpriteCachePath, "z3"), "*.rdc*");
             }
 
-            z3_sprites = z3_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
+            if (avoid.Length > 0)
+                z3_sprites = z3_sprites.Where(i => !avoid.Split(',').Any(e => i.Contains(e))).ToArray();
 
             int chosen = tmp_rnd.Next(z3_sprites.Length);
             if (authors != null && authors.Length >= chosen)

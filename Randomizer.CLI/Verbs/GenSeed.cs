@@ -664,11 +664,9 @@ namespace Randomizer.CLI.Verbs {
 
             Lazy<byte[]> fullRom;
             fullRom = new Lazy<byte[]>(() => {
-                // WIP -- do this for all modes
                 using var sm = File.OpenRead(opts.smFile);
                 using var z3 = File.OpenRead(opts.z3File);
                 var rom = FileData.Rom.CombineSMZ3Rom(sm, z3);
-                // ENDWIP
                 using var ips = OpenReadInnerStream(base_ips);
                 FileData.Rom.ApplyIps(rom, ips);
                 return rom;
