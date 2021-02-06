@@ -66,10 +66,8 @@ export default function Configure(props) {
         setModal(true);
 
         try {
-            if (options.gamemode === 'multiworld') {
-                for (let p = 0; p < parseInt(options.players); p++) {
-                    options[`player-${p}`] = names[p];
-                }
+            for (let p = 0; p < parseInt(options.players); p++) {
+                options[`player-${p}`] = names[p];
             }
 
             const response = await fetch(`/api/randomizers/${gameId}/generate`, {
@@ -113,7 +111,16 @@ export default function Configure(props) {
                     ))}
                     {options.gamemode === 'multiworld' && (
                         <FormGroup row={true}>
-                            {map(createPlayerInputs(), (input, p) => (
+                            {map(createPlayerInputs(parseInt(options.players)), (input, p) => (
+                                <Col key={`playerInput${p}`} md={{ size: 5, offset: 1 - (p % 2) }}>
+                                    {input}
+                                </Col>
+                            ))}
+                        </FormGroup>
+                    )}
+                    {options.gamemode !== 'multiworld' && (
+                        <FormGroup row={true}>
+                            {map(createPlayerInputs(1), (input, p) => (
                                 <Col key={`playerInput${p}`} md={{ size: 5, offset: 1 - (p % 2) }}>
                                     {input}
                                 </Col>
@@ -183,9 +190,9 @@ export default function Configure(props) {
         : null;
     }
 
-    function createPlayerInputs() {
+    function createPlayerInputs(players) {
         /* Chromium did not respect "off", so we're forced to use "new-passwod" */
-        return map(range(parseInt(options.players)), (p) => (
+        return map(range(players), (p) => (
             <InputGroup prefix={`Name ${p + 1}`}>
                 <Input autoComplete="new-password" value={names[p] || ''} required pattern=".*[A-Za-z\d].*"
                     onChange={(e) => { playerPatternValidity(e.target); setNames({ ...names, [p]: e.target.value }); }}

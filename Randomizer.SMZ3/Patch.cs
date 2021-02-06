@@ -562,6 +562,18 @@ namespace Randomizer.SMZ3 {
 
         void WritePlayerNames() {
             patches.AddRange(allWorlds.Select(world => (0x385000 + (world.Id * 16), PlayerNameBytes(world.Player))));
+
+            // Write myWorld.Player name to alttp save file while we're here
+            // "Player" is the default; don't write the default; this creates a weird edge case...
+            if (myWorld.Player != "Player") {
+                patches.Add((Snes(0x5e03fa), FileSelectPlayerNameBytes(myWorld.Player)));
+                if (myWorld.Player.Length > 4) {
+                    patches.Add((Snes(0x5e08fa), FileSelectPlayerNameBytes(myWorld.Player[4..])));
+                }
+                if (myWorld.Player.Length > 8) {
+                    patches.Add((Snes(0x5e0dfa), FileSelectPlayerNameBytes(myWorld.Player[8..])));
+                }
+            }
         }
 
         byte[] PlayerNameBytes(string name) {
@@ -573,6 +585,89 @@ namespace Randomizer.SMZ3 {
                 name = name.PadRight(name.Length + (int)Math.Floor(pad));
             }
             return AsAscii(name.ToUpper()).Concat(UintBytes(0)).ToArray();
+        }
+
+        /* File Select chars are weirdly placed:
+           A-F = 4A-4F
+           G-V = 60-6F
+           W-Z = 80-83
+           a-p = 60-6f
+           q-z = 80-89
+           - = 89 and ~ = 8E
+           upper case has 0x01 byte post-pended; lower has 0x00
+
+            0-9 = not here... so... leet speak? I guess?
+
+            Web frontend restricts names to asciibetical alphanumeric
+            so we don't have to worry about other chars (for now).
+        */
+        byte[] FileSelectPlayerNameBytes(string name) {
+            name = name.Length > 4 ? name[..4] : name;
+            byte[] fs_name = new byte[8];
+            int fs_name_loc = 0;
+
+            foreach (char c in name) {
+                if (c >= 'A' && c <= 'F') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 9)[0]; // Magical offset
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (c >= 'G' && c <= 'V') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 25)[0]; // Adding 0x19
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (c >= 'W' && c <= 'Z') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 41)[0]; // Adding 0x29
+                    fs_name[fs_name_loc++] = 0x01;
+                } else if (c >= 'a' && c <= 'p') {
+                    fs_name[fs_name_loc++] = UintBytes(c - 1)[0]; // Magical offset
+                    fs_name[fs_name_loc++] = 0x00;
+                } else if (c >= 'q' && c <= 'z') {
+                    fs_name[fs_name_loc++] = UintBytes(c + 15)[0]; // Adding -1 + 0x10
+                    fs_name[fs_name_loc++] = 0x00;
+                } else if (Char.ToUpper(c) == '-') {
+                    fs_name[fs_name_loc++] = 0x89; fs_name[fs_name_loc++] = 0x01;
+                } else if (Char.ToUpper(c) == '~') {
+                    fs_name[fs_name_loc++] = 0x8E; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '0') {
+                    // there's an existing approximate char
+                    fs_name[fs_name_loc++] = 0x0C; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '1') {
+                    // there's an existing approximate char
+                    fs_name[fs_name_loc++] = 0x28; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '2') {
+                    // lower-case z
+                    fs_name[fs_name_loc++] = 0x89; fs_name[fs_name_loc++] = 0x00;
+                } else if (c == '3') {
+                    // there's an existing approximate char
+                    fs_name[fs_name_loc++] = 0x29; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '4') {
+                    // upper case A
+                    fs_name[fs_name_loc++] = 0x4A; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '5') {
+                    // lower case s
+                    fs_name[fs_name_loc++] = 0x82; fs_name[fs_name_loc++] = 0x00;
+                } else if (c == '6') {
+                    // lower case b
+                    fs_name[fs_name_loc++] = 0x61; fs_name[fs_name_loc++] = 0x00;
+                } else if (c == '7') {
+                    // upper case T
+                    fs_name[fs_name_loc++] = 0x6D; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '8') {
+                    // upper case B
+                    fs_name[fs_name_loc++] = 0x4B; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '9') {
+                    // lower case g
+                    fs_name[fs_name_loc++] = 0x66; fs_name[fs_name_loc++] = 0x00;
+                } else {
+                    // Replace everything else with spaces
+                    fs_name[fs_name_loc++] = 0x8C; fs_name[fs_name_loc++] = 0x01;
+                }
+            }
+
+            int padding = 4 - name.Length;
+            for (int i = name.Length; i < padding; i++) {
+                fs_name[fs_name_loc++] = 0x8C; fs_name[fs_name_loc++] = 0x01;
+            }
+
+            return fs_name.ToArray();
         }
 
         void WriteSeedData() {
