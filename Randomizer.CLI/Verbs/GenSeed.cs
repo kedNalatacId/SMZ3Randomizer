@@ -16,7 +16,7 @@ namespace Randomizer.CLI.Verbs {
 
             { "AsarBin", "asar" },
             { "AutoIPS", false },
-            { "AutoIPSConfig", "autoips.conf" },
+            { "AutoIPSConfig", "" },
             { "AutoIPSPath", "/tmp" },
             { "GoFast", false },
             { "Ips", new List<string> {} },
@@ -427,7 +427,7 @@ namespace Randomizer.CLI.Verbs {
                 opts.AutoIPSConfig = !String.IsNullOrEmpty(conf.AutoIPSConfig) ? conf.AutoIPSConfig : (string)opts.defaults["AutoIPSConfig"];
 
             if (String.IsNullOrEmpty(opts.AutoIPSPath))
-                opts.AutoIPSPath = !String.IsNullOrEmpty(conf.AutoIPSPath) ? conf.AutoIPSPath : (string)opts.defaults["AutoIPSConfig"];
+                opts.AutoIPSPath = !String.IsNullOrEmpty(conf.AutoIPSPath) ? conf.AutoIPSPath : (string)opts.defaults["AutoIPSPath"];
 
             if (String.IsNullOrEmpty(opts.Keycards))
                 opts.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)opts.defaults["Keycards"];
@@ -602,7 +602,9 @@ namespace Randomizer.CLI.Verbs {
         private static string ConstructBaseIps(IRandomizer randomizer, GenSeedOptions opts, string[] authors) {
             var ips_file = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
 
-            string ips_opts = $"build.py --config {opts.AutoIPSConfig} --output {ips_file}";
+            string ips_opts = $"build.py --output {ips_file}";
+            if (!String.IsNullOrEmpty(opts.AutoIPSConfig) && File.Exists(opts.AutoIPSConfig))
+                ips_opts += $" --config {opts.AutoIPSConfig}";
             if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
                 ips_opts += $" --asar {opts.AsarBin}";
             if (authors.Length > 1) {
