@@ -602,7 +602,7 @@ namespace Randomizer.SMZ3 {
            - = 89 and ~ = 8E
            upper case has 0x01 byte post-pended; lower has 0x00
 
-            This currently only supports ASCII and doesn't fail properly for non-ascii... needs work
+            0-9 = not here... so... leet speak? I guess?
         */
         byte[] FileSelectPlayerNameBytes(string name) {
             name = name.Length > 4 ? name[..4] : name;
@@ -626,20 +626,48 @@ namespace Randomizer.SMZ3 {
                     fs_name[fs_name_loc++] = UintBytes(c + 15)[0]; // Adding -1 + 0x10
                     fs_name[fs_name_loc++] = 0x00;
                 } else if (Char.ToUpper(c) == '-') {
-                    fs_name[fs_name_loc++] = 0x89;
-                    fs_name[fs_name_loc++] = 0x01;
+                    fs_name[fs_name_loc++] = 0x89; fs_name[fs_name_loc++] = 0x01;
                 } else if (Char.ToUpper(c) == '~') {
-                    fs_name[fs_name_loc++] = 0x8E;
-                    fs_name[fs_name_loc++] = 0x01;
+                    fs_name[fs_name_loc++] = 0x8E; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '0') {
+                    // there's an existing approximate char
+                    fs_name[fs_name_loc++] = 0x0C; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '1') {
+                    // there's an existing approximate char
+                    fs_name[fs_name_loc++] = 0x28; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '2') {
+                    // lower-case z
+                    fs_name[fs_name_loc++] = 0x89; fs_name[fs_name_loc++] = 0x00;
+                } else if (c == '3') {
+                    // there's an existing approximate char
+                    fs_name[fs_name_loc++] = 0x29; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '4') {
+                    // upper case A
+                    fs_name[fs_name_loc++] = 0x4A; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '5') {
+                    // lower case s
+                    fs_name[fs_name_loc++] = 0x82; fs_name[fs_name_loc++] = 0x00;
+                } else if (c == '6') {
+                    // lower case b
+                    fs_name[fs_name_loc++] = 0x61; fs_name[fs_name_loc++] = 0x00;
+                } else if (c == '7') {
+                    // upper case T
+                    fs_name[fs_name_loc++] = 0x6D; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '8') {
+                    // upper case B
+                    fs_name[fs_name_loc++] = 0x4B; fs_name[fs_name_loc++] = 0x01;
+                } else if (c == '9') {
+                    // lower case g
+                    fs_name[fs_name_loc++] = 0x66; fs_name[fs_name_loc++] = 0x00;
                 } else {
-                    Console.WriteLine(String.Join(' ', "Unsupported char:", c));
+                    // Replace everything else with spaces
+                    fs_name[fs_name_loc++] = 0x8C; fs_name[fs_name_loc++] = 0x01;
                 }
             }
 
             int padding = 4 - name.Length;
             for (int i = name.Length; i < padding; i++) {
-                fs_name[fs_name_loc++] = 0x8C;
-                fs_name[fs_name_loc++] = 0x01;
+                fs_name[fs_name_loc++] = 0x8C; fs_name[fs_name_loc++] = 0x01;
             }
 
             return fs_name.ToArray();
