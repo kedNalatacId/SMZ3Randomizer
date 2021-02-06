@@ -61,7 +61,11 @@ namespace Randomizer.SMZ3 {
             }
 
             if (config.GameMode == GameMode.Normal) {
-                worlds.Add(new World(config, "Player", 0, new HexGuid()));
+                var found = options.TryGetValue("player-0", out var player);
+                if (!found || !alphaNumeric.IsMatch(player))
+                    worlds.Add(new World(config, "Player", 0, new HexGuid()));
+                else
+                    worlds.Add(new World(config, player, 0, new HexGuid()));
             }
             else {
                 int players = options.ContainsKey("players") ? int.Parse(options["players"]) : 1;
