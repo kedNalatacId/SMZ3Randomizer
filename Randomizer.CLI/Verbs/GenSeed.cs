@@ -548,7 +548,7 @@ namespace Randomizer.CLI.Verbs {
                 if (String.IsNullOrEmpty(options.AutoIPSPath))
                     throw new ArgumentException("--autoipspath must be set when using --autoips");
                 if (!Directory.Exists(options.AutoIPSPath))
-                    throw new DirectoryNotFoundException($"Could not find --auotipspath {options.AutoIPSPath}");
+                    throw new DirectoryNotFoundException($"Could not find --autoipspath {options.AutoIPSPath}");
 
                 // WIP -- have to figure why looping with autoips is creating broken seeds
                 // Until then, don't allow both
