@@ -607,9 +607,11 @@ namespace Randomizer.CLI.Verbs {
                 ips_opts += $" --config {opts.AutoIPSConfig}";
             if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
                 ips_opts += $" --asar {opts.AsarBin}";
-            if (authors.Length > 1) {
-                ips_opts += $" --smspriteauthor {authors[0]}";
-                ips_opts += $" --z3spriteauthor {authors[1]}";
+            if (authors.Length > 0) {
+                if (!String.IsNullOrEmpty(authors[0]))
+                    ips_opts += $" --smspriteauthor {authors[0]}";
+                if (authors.Length > 1 && !String.IsNullOrEmpty(authors[1]))
+                    ips_opts += $" --z3spriteauthor {authors[1]}";
             }
             if ((bool)opts.SurpriseMe)
                 ips_opts += " --surprise_me";
@@ -622,7 +624,7 @@ namespace Randomizer.CLI.Verbs {
             if (conf.ContainsKey("KeyShuffle")) {
                 // Because of how ExportConfig currently works, have to deserialize this JSON object
                 // TODO: needs fixing :(
-                //   This code needs is awful, it needs to be riven
+                //   This code is awful, it needs to be riven
                 Dictionary<string, int> myst = new Dictionary<string, int>();
                 myst = JsonConvert.DeserializeObject<Dictionary<string, int>>(conf["RandomKeys"]);
                 if (conf["KeyShuffle"] == "Randomized") {
@@ -640,9 +642,10 @@ namespace Randomizer.CLI.Verbs {
                     ips_opts += " -k 0";
                 }
             }
-            if (conf.ContainsKey("Keycards") && conf["Keycards"] == "None") {
+            if (conf.ContainsKey("Keycards") && conf["Keycards"] == "None")
                 ips_opts += " --no-cards";
-            }
+            if (conf.ContainsKey("Seed") && Int32.Parse(conf["Seed"]) > 0)
+                ips_opts += $" --seed {conf["Seed"]}";
 
             string cur_path = Directory.GetCurrentDirectory();
             Directory.SetCurrentDirectory(opts.AutoIPSPath);

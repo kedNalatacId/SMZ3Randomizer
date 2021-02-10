@@ -58,7 +58,7 @@ namespace Randomizer.SMZ3 {
             }
 
             randoRnd = new Random(randoSeed);
-            Config = new Config(options, randoRnd);
+            Config = new Config(options, randoSeed, randoRnd);
             var worlds = new List<World>();
 
             /* FIXME: Just here to semi-obfuscate race seeds until a better solution is in place */
@@ -118,7 +118,7 @@ namespace Randomizer.SMZ3 {
         }
 
         public Dictionary<int, ILocationTypeData> GetLocations() => 
-            new World(new Config(new Dictionary<string, string>(), randoRnd), "", 0, "")
+            new World(new Config(new Dictionary<string, string>(), 0, randoRnd), "", 0, "")
                 .Locations.Select(location => new LocationTypeData {
                     Id = location.Id,
                     Name = location.Name,
@@ -134,6 +134,7 @@ namespace Randomizer.SMZ3 {
             }).Cast<IItemTypeData>().ToDictionary(itemTypeData => itemTypeData.Id);
 
         public Dictionary<string, string> ExportConfig() => new Dictionary<string, string>() {
+            {"Seed", Config.Seed.ToString()},
             {"GameMode", Config.GameMode.ToString()},
             {"PlayerName", Config.PlayerName.ToString()},
             {"Z3Logic", Config.Z3Logic.ToString()},

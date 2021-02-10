@@ -106,12 +106,12 @@ namespace Randomizer.SMZ3 {
             WriteZ3Locations(myWorld.Regions.OfType<Z3Region>().SelectMany(x => x.Locations));
 
             WriteStringTable();
-
-            WriteKeyCardDoors();
+            WriteSMKeyCardDoors();
+            WriteZ3KeysanityFlags();
             WritePlayerNames();
             WriteSeedData();
             WriteGameTitle();
-            WriteGameModeData();
+            WriteCommonFlags();
 
             return patches.ToDictionary(x => x.offset, x => x.bytes);
         }
@@ -692,9 +692,12 @@ namespace Randomizer.SMZ3 {
             patches.Add((Snes(0x80FF80), AsAscii(myWorld.Guid)));
         }
 
-        void WriteGameModeData() {
+        void WriteCommonFlags() {
             if (myWorld.Config.GameMode == GameMode.Multiworld) {
                 patches.Add((Snes(0xF47000), UshortBytes(0x0001)));
+            }
+            if (myWorld.Config.Keysanity) {
+                patches.Add((Snes(0xF47006), UshortBytes(0x0001)));
             }
         }
 
@@ -717,7 +720,14 @@ namespace Randomizer.SMZ3 {
             patches.Add((Snes(0x80FFC0), title));
         }
 
-        void WriteKeyCardDoors() {
+        void WriteZ3KeysanityFlags() {
+            if (myWorld.Config.Keysanity) {
+                patches.Add((Snes(0x40003B), new byte[] { 1 })); // MapMode #$00 = Always On (default) - #$01 = Require Map Item
+                patches.Add((Snes(0x400045), new byte[] { 0x0f })); // display ----dcba a: Small Keys, b: Big Key, c: Map, d: Compass
+            }
+        }
+
+        void WriteSMKeyCardDoors() {
             if (!myWorld.Config.UseKeycards)
                 return;
 

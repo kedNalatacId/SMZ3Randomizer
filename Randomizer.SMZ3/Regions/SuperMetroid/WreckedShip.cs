@@ -63,8 +63,8 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                         /* Through Maridia -> Forgotten Highway */
                         items.CanUsePowerBombs() && items.Gravity ||
                         /* From Maridia portal -> Forgotten Highway */
-                        items.CanAccessMaridiaPortal(World) && items.Gravity && items.CardMaridiaL2 && (
-                            items.CanDestroyBombWalls() ||
+                        items.CanAccessMaridiaPortal(World) && items.Gravity && (
+                            items.CardMaridiaL2 && items.CanDestroyBombWalls() ||
                             World.Locations.Get("Space Jump").Available(items)
                         )
                     ),
@@ -75,11 +75,18 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                             items.SpeedBooster || items.Grapple || items.SpaceJump || items.Gravity
                         ) ||
                         /* Through Maridia -> Forgotten Highway */
-                        items.CanUsePowerBombs() && items.Gravity ||
+                        items.CanUsePowerBombs() && (
+                            items.Gravity ||
+                            /* Climb Mt. Everest */
+                            items.HiJump && items.Ice && items.Grapple && items.CardMaridiaL1
+                        ) ||
                         /* From Maridia portal -> Forgotten Highway */
-                        items.CanAccessMaridiaPortal(World) && items.Gravity && (
-                            items.CanDestroyBombWalls() && items.CardMaridiaL2 ||
-                            World.Locations.Get("Space Jump").Available(items)
+                        items.CanAccessMaridiaPortal(World) && (
+                            items.HiJump && items.CanPassBombPassages() && items.CardMaridiaL2 ||
+                            items.Gravity && (
+                                items.CardMaridiaL2 && items.CanDestroyBombWalls() ||
+                                World.Locations.Get("Space Jump").Available(items)
+                            )
                         )
                     ),
                 _ =>
@@ -92,6 +99,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                             /* Climb Mt. Everest */
                             items.HiJump && (items.Ice || items.CanSpringBallJump()) && items.Grapple && items.CardMaridiaL1
                         ) ||
+                        /* From Maridia portal -> Forgotten Highway */
                         items.CanAccessMaridiaPortal(World) && (
                             items.HiJump && items.CanPassBombPassages() && items.CardMaridiaL2 ||
                             items.Gravity && (
@@ -99,7 +107,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid {
                                 World.Locations.Get("Space Jump").Available(items)
                             )
                         )
-                    ),
+                    )
             };
         }
 

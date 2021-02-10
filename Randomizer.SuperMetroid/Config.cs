@@ -71,6 +71,7 @@ namespace Randomizer.SuperMetroid {
     }
 
     public class Config {
+        public int Seed { get; set; }
         public GameMode GameMode { get; set; } = GameMode.Normal;
         public SMLogic SMLogic { get; set; } = SMLogic.Normal;
         public MorphLocation MorphLocation { get; set; } = MorphLocation.Randomized;
@@ -84,7 +85,8 @@ namespace Randomizer.SuperMetroid {
         public Dictionary<string,RandomizedItemLocation> RandomCards { get; set; }
         public bool MysterySeed { get; set; } = false;
 
-        public Config(IDictionary<string, string> options, Random Rnd) {
+        public Config(IDictionary<string, string> options, int randoSeed, Random Rnd) {
+            Seed            = randoSeed;
             GameMode        = ParseOption(options, GameMode.Normal);
             MysterySeed     = ParseOption(options, "MysterySeed", false);
             Race            = ParseOption(options, "Race", false);

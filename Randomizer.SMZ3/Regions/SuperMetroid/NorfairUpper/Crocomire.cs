@@ -61,6 +61,10 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
                         /* Cathedral -> through the floor or Vulcano */
                         items.CanOpenRedDoors() && (Config.UseKeycards ? items.CardNorfairL2 : items.Super) &&
                             (items.CanFly() || items.HiJump) && (items.CanPassBombPassages() || items.Gravity && items.Morph) && items.Wave
+                        ||
+                        /* Reverse Lava Dive */
+                        items.CanAccessNorfairLowerPortal() && items.ScrewAttack && items.SpaceJump && items.Super && 
+                        items.Gravity && items.Wave && (items.CardNorfairL2 || items.Morph)
                     ),
                 Medium => (
                         (items.CanDestroyBombWalls() || items.SpeedBooster) && items.Super && items.Morph || items.CanAccessNorfairUpperPortal()
@@ -70,15 +74,15 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
                             items.SpeedBooster && (items.HasEnergyReserves(5) || items.Varia) ||
                         /* Frog Speedway */
                         items.SpeedBooster && (items.HasEnergyReserves(4) || items.Varia) &&
-                            (items.Super || items.Wave) /* Blue Gate */ ||
+                            items.CanPassWaveGates(World) ||
                         /* Cathedral -> through the floor or Vulcano */
                         items.CanHeckRun() && items.CanOpenRedDoors() && (Config.UseKeycards ? items.CardNorfairL2 : items.Super) &&
                             (items.CanFly() || items.HiJump || items.SpeedBooster || items.Varia && items.Ice) &&
-                            (items.CanPassBombPassages() || items.Varia && items.Morph) &&
-                            (items.Super || items.Wave) /* Blue Gate */
+                            (items.CanPassBombPassages() || items.Varia && items.Morph) && items.CanPassWaveGates(World)
                     ) ||
                     /* Reverse Lava Dive */
-                    items.CanAccessNorfairLowerPortal() && items.ScrewAttack && items.SpaceJump && items.Varia && items.Super && items.HasEnergyReserves(4),
+                    items.CanAccessNorfairLowerPortal() && items.ScrewAttack && items.SpaceJump && items.Varia && items.Super &&
+                    items.HasEnergyReserves(4) && (items.CardNorfairL2 || items.Morph),
                 _ => (
                         (items.CanDestroyBombWalls() || items.SpeedBooster) && items.Super && items.Morph || items.CanAccessNorfairUpperPortal()
                     ) && (
@@ -87,15 +91,16 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
                             items.SpeedBooster && (items.HasEnergyReserves(3) || items.Varia) ||
                         /* Frog Speedway */
                         items.SpeedBooster && (items.HasEnergyReserves(2) || items.Varia) &&
-                            (items.Missile || items.Super || items.Wave) /* Blue Gate */ ||
+                            items.CanPassWaveGates(World) ||
                         /* Cathedral -> through the floor or Vulcano */
                         items.CanHellRun() && items.CanOpenRedDoors() && (Config.UseKeycards ? items.CardNorfairL2 : items.Super) &&
                             (items.CanFly() || items.HiJump || items.SpeedBooster || items.CanSpringBallJump() || items.Varia && items.Ice) &&
                             (items.CanPassBombPassages() || items.Varia && items.Morph) &&
-                            (items.Missile || items.Super || items.Wave) /* Blue Gate */
+                            items.CanPassWaveGates(World)
                     ) ||
                     /* Reverse Lava Dive */
-                    items.CanAccessNorfairLowerPortal() && items.ScrewAttack && items.SpaceJump && items.Varia && items.Super && items.HasEnergyReserves(2)
+                    items.CanAccessNorfairLowerPortal() && items.ScrewAttack && items.SpaceJump && items.Varia && items.Super && 
+                    items.HasEnergyReserves(2) && (items.CardNorfairL2 || items.Morph)
             };
         }
     }

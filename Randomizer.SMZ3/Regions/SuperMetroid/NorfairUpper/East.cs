@@ -13,9 +13,6 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
             RegionItems = new[] { CardLowerNorfairL1, CardNorfairBoss, CardCrateriaBoss };
 
             Locations = new List<Location> {
-                new Location(this, 49, 0x8F8AE4, LocationType.Hidden, "Missile (lava room)", Logic switch {
-                    _ => new Requirement(items => items.Morph)
-                }),
                 new Location(this, 61, 0x8F8C3E, LocationType.Chozo, "Reserve Tank, Norfair", Logic switch {
                     Normal => items => items.CardNorfairL2 && items.Morph && (
                         items.SpaceJump ||

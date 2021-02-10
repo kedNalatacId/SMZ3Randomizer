@@ -12,6 +12,24 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
         public West(World world, Config config) : base(world, config) {
             RegionItems = new[] { CardLowerNorfairL1, CardNorfairL2, CardNorfairBoss };
             Locations = new List<Location> {
+                new Location(this, 49, 0x8F8AE4, LocationType.Hidden, "Missile (lava room)", Logic switch {
+                    Normal => items => items.Varia && (
+                            items.CanOpenRedDoors() && (items.CanFly() || items.HiJump || items.SpeedBooster) ||
+                            World.CanEnter("Norfair Upper East", items) && items.CardNorfairL2
+                        ) && items.Morph,
+                    Medium => items => items.CanHeckRun() && (
+                            items.CanOpenRedDoors() && (
+                                items.CanFly() || items.HiJump || items.SpeedBooster || items.Varia && items.Ice
+                            ) ||
+                            World.CanEnter("Norfair Upper East", items) && items.CardNorfairL2
+                        ) && items.Morph,
+                    _ => new Requirement(items => items.CanHellRun() && (
+                            items.CanOpenRedDoors() && (
+                                items.CanFly() || items.HiJump || items.SpeedBooster || items.CanSpringBallJump() || items.Varia && items.Ice
+                            ) ||
+                            World.CanEnter("Norfair Upper East", items) && items.CardNorfairL2
+                        ) && items.Morph),
+                }),
                 new Location(this, 50, 0x8F8B24, LocationType.Chozo, "Ice Beam", Logic switch {
                     Normal => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
                     Medium => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && (items.Varia || items.HasEnergyReserves(5)),
@@ -19,10 +37,16 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
                 }),
                 new Location(this, 51, 0x8F8B46, LocationType.Hidden, "Missile (below Ice Beam)", Logic switch {
                     Normal => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && items.Varia && items.SpeedBooster,
-                    Medium => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() && (items.Varia || items.HasEnergyReserves(5)),
+                    Medium => items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() &&
+                        (items.Varia || items.HasEnergyReserves(5)) ||
+                        /* Access to Croc's room to get spark */
+                        items.CanPassWaveGates(World) && items.Varia && items.SpeedBooster &&
+                        (config.Keysanity ? items.CardNorfairBoss : items.Super) && items.CardNorfairL1,
                     _ => new Requirement(items => (config.UseKeycards ? items.CardNorfairL1 : items.Super) && items.CanPassBombPassages() &&
                         (items.Varia || items.HasEnergyReserves(3)) ||
-                        items.Varia && items.SpeedBooster && items.Super && items.CardNorfairL1)
+                        /* Access to Croc's room to get spark */
+                        items.CanPassWaveGates(World) && items.Varia && items.SpeedBooster &&
+                        (config.Keysanity ? items.CardNorfairBoss : items.Super) && items.CardNorfairL1)
                 }),
                 new Location(this, 53, 0x8F8BAC, LocationType.Chozo, "Hi-Jump Boots", Logic switch {
                     _ => new Requirement(items => items.CanOpenRedDoors() && items.CanPassBombPassages())

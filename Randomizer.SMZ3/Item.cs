@@ -926,6 +926,14 @@ namespace Randomizer.SMZ3 {
             return items.Flute && items.CanLiftHeavy();
         }
 
+        public static bool CanPassWaveGates(this Progression items, World world) {
+            return world.Config.SMLogic switch {
+                Normal => items.Wave,
+                Medium => items.Super || items.Wave,
+                _      => items.Missile || items.Super || items.Wave
+            };
+        }
+
         public static bool CanAccessMaridiaPortal(this Progression items, World world) {
             return world.Config.SMLogic switch {
                 Normal =>

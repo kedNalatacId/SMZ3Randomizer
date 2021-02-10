@@ -144,6 +144,7 @@ namespace Randomizer.SMZ3 {
     }
 
     public class Config {
+        public int Seed { get; set; }
         public GameMode GameMode { get; set; } = GameMode.Normal;
         public string PlayerName { get; set; } = "Player";
         public Z3Logic Z3Logic { get; set; } = Z3Logic.Normal;
@@ -167,8 +168,9 @@ namespace Randomizer.SMZ3 {
         public bool MysterySeed { get; set; } = false;
         public bool RandomFlyingTiles { get; set; } = false;
 
-        public Config(IDictionary<string, string> options, Random Rnd) {
+        public Config(IDictionary<string, string> options, int randoSeed, Random Rnd) {
             // The things that aren't mystery
+            Seed            = randoSeed;
             GameMode        = ParseOption(options, GameMode.Normal);
             MysterySeed     = ParseOption(options, "MysterySeed", false);
             PlayerName      = options.ContainsKey("playername") ? options["playername"] : "Player";

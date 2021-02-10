@@ -45,7 +45,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
                         (items.CanIbj() || items.CanUsePowerBombs() && items.TwoPowerBombs || items.ScrewAttack),
                 _ =>
                     items.CardCrateriaL1 && (
-                        (items.Morph && (items.Bombs || items.TwoPowerBombs)) ||
+                        items.Morph && (items.Bombs || items.TwoPowerBombs) ||
                         items.ScrewAttack || items.SpeedBooster && items.CanUsePowerBombs() && items.HasEnergyReserves(2)
                     )
             };

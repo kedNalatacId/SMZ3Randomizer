@@ -51,20 +51,20 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
         public override bool CanEnter(Progression items) {
             return Logic switch {
                 Normal =>
-                    (items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
+                    items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
                     items.CanUsePowerBombs() ||
                     items.CanAccessNorfairUpperPortal() && items.Morph && items.Wave &&
-                        (items.Ice || items.HiJump || items.SpaceJump)),
+                        (items.Ice || items.HiJump || items.SpaceJump),
                 Medium =>
-                    (items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
+                    items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
                     items.CanUsePowerBombs() ||
                     items.CanAccessNorfairUpperPortal() && items.Morph && items.Wave &&
-                        (items.Ice || items.HiJump || items.CanFly())),
+                        (items.Ice || items.HiJump || items.CanFly()),
                 _ =>
-                    (items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
+                    items.CanOpenRedDoors() && (items.CanDestroyBombWalls() || items.SpeedBooster) ||
                     items.CanUsePowerBombs() ||
                     items.CanAccessNorfairUpperPortal() && items.Morph && (items.CanOpenRedDoors() || items.Wave) &&
-                        (items.Ice || items.HiJump || items.CanSpringBallJump() || items.CanFly()))
+                        (items.Ice || items.HiJump || items.CanSpringBallJump() || items.CanFly())
             };
         }
     }
