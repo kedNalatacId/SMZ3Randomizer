@@ -3,9 +3,7 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Maridia {
-
     class Inner : SMRegion, IReward {
-
         public override string Name => "Maridia Inner";
         public override string Area => "Maridia";
 
@@ -16,33 +14,39 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Maridia {
             Locations = new List<Location> {
                 new Location(this, 140, 0x8FC4AF, LocationType.Visible, "Super Missile (yellow Maridia)", Logic switch {
                     Normal => items => items.CardMaridiaL1 && items.CanPassBombPassages(),
+                    Medium => items => items.CardMaridiaL1 && items.CanPassBombPassages() && (items.Gravity || items.Ice),
                     _ => new Requirement(items => items.CardMaridiaL1 && items.CanPassBombPassages() &&
                         (items.Gravity || items.Ice || items.HiJump && items.CanSpringBallJump()))
                 }),
                 new Location(this, 141, 0x8FC4B5, LocationType.Visible, "Missile (yellow Maridia super missile)", Logic switch {
                     Normal => items => items.CardMaridiaL1 && items.CanPassBombPassages(),
+                    Medium => items => items.CardMaridiaL1 && items.CanPassBombPassages() && (items.Gravity || items.Ice),
                     _ => new Requirement(items => items.CardMaridiaL1 && items.CanPassBombPassages() &&
                         (items.Gravity || items.Ice || items.HiJump && items.CanSpringBallJump()))
                 }),
                 new Location(this, 142, 0x8FC533, LocationType.Visible, "Missile (yellow Maridia false wall)", Logic switch {
                     Normal => items => items.CardMaridiaL1 && items.CanPassBombPassages(),
+                    Medium => items => items.CardMaridiaL1 && items.CanPassBombPassages() && (items.Gravity || items.Ice),
                     _ => new Requirement(items => items.CardMaridiaL1 && items.CanPassBombPassages() &&
                         (items.Gravity || items.Ice || items.HiJump && items.CanSpringBallJump()))
                 }),
                 new Location(this, 143, 0x8FC559, LocationType.Chozo, "Plasma Beam", Logic switch {
                     Normal => items => CanDefeatDraygon(items) && (items.ScrewAttack || items.Plasma) && items.SpaceJump,
-                    Medium => items => CanDefeatDraygon(items) && (items.ScrewAttack || items.Plasma) && (items.HiJump || items.CanFly()),
+                    Medium => items => CanDefeatDraygon(items) && (items.ScrewAttack || items.Plasma) &&
+                        (items.HiJump || items.CanFly() || items.SpeedBooster),
                     _ => new Requirement(items => CanDefeatDraygon(items) &&
                         (items.Charge && items.HasEnergyReserves(3) || items.ScrewAttack || items.Plasma || items.SpeedBooster) &&
                         (items.HiJump || items.CanSpringBallJump() || items.CanFly() || items.SpeedBooster))
                 }),
                 new Location(this, 144, 0x8FC5DD, LocationType.Visible, "Missile (left Maridia sand pit room)", Logic switch {
                     Normal => items => CanReachAqueduct(items) && items.Super && items.CanPassBombPassages(),
+                    Medium => items => CanReachAqueduct(items) && items.Super && (items.HiJump && items.SpaceJump || items.Gravity),
                     _ => new Requirement(items => CanReachAqueduct(items) && items.Super &&
                         (items.HiJump && (items.SpaceJump || items.CanSpringBallJump()) || items.Gravity))
                 }),
                 new Location(this, 145, 0x8FC5E3, LocationType.Chozo, "Reserve Tank, Maridia", Logic switch {
                     Normal => items => CanReachAqueduct(items) && items.Super && items.CanPassBombPassages(),
+                    Medium => items => CanReachAqueduct(items) && items.Super && (items.HiJump && items.SpaceJump || items.Gravity),
                     _ => new Requirement(items => CanReachAqueduct(items) && items.Super &&
                         (items.HiJump && (items.SpaceJump || items.CanSpringBallJump()) || items.Gravity))
                 }),
@@ -52,6 +56,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.Maridia {
                 }),
                 new Location(this, 147, 0x8FC5F1, LocationType.Visible, "Power Bomb (right Maridia sand pit room)", Logic switch {
                     Normal => new Requirement(items => CanReachAqueduct(items) && items.Super),
+                    Medium => items => CanReachAqueduct(items) && items.Super && items.Gravity,
                     _ => items => CanReachAqueduct(items) && items.Super && (items.HiJump && items.CanSpringBallJump() || items.Gravity)
                 }),
                 new Location(this, 148, 0x8FC603, LocationType.Visible, "Missile (pink Maridia)", Logic switch {

@@ -412,5 +412,13 @@ namespace Randomizer.SuperMetroid {
         public static bool CanOpenRedDoors(this Progression items) {
             return items.Missile || items.Super;
         }
+
+        public static bool CanPassWaveGates(this Progression items, World world) {
+            return world.Config.SMLogic switch {
+                Normal => items.Wave,
+                Medium => items.Super || items.Wave,
+                _      => items.Missile || items.Super || items.Wave
+            };
+        }
     }
 }

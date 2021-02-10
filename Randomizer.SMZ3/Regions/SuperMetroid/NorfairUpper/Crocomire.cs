@@ -3,15 +3,11 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
-
     class Crocomire : SMRegion {
-
         public override string Name => "Norfair Upper Crocomire";
         public override string Area => "Norfair Upper";
 
         public Crocomire(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardLowerNorfairL1, CardCrateriaBoss };
-
             Locations = new List<Location> {
                 new Location(this, 52, 0x8F8BA4, LocationType.Visible, "Energy Tank, Crocomire", Logic switch {
                     Normal => items => CanAccessCrocomire(items) && (items.HasEnergyReserves(1) || items.SpaceJump || items.Grapple),
@@ -95,8 +91,7 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
                         /* Cathedral -> through the floor or Vulcano */
                         items.CanHellRun() && items.CanOpenRedDoors() && (Config.UseKeycards ? items.CardNorfairL2 : items.Super) &&
                             (items.CanFly() || items.HiJump || items.SpeedBooster || items.CanSpringBallJump() || items.Varia && items.Ice) &&
-                            (items.CanPassBombPassages() || items.Varia && items.Morph) &&
-                            items.CanPassWaveGates(World)
+                            (items.CanPassBombPassages() || items.Varia && items.Morph) && items.CanPassWaveGates(World)
                     ) ||
                     /* Reverse Lava Dive */
                     items.CanAccessNorfairLowerPortal() && items.ScrewAttack && items.SpaceJump && items.Varia && items.Super && 

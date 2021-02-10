@@ -3,16 +3,14 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
-
     class Pink : SMRegion {
-
         public override string Name => "Brinstar Pink";
         public override string Area => "Brinstar";
 
         public Pink(World world, Config config) : base(world, config) {
             Weight = -4;
 
-            RegionItems = new[] { CardBrinstarBoss, CardCrateriaBoss };
+            RegionItems = new[] { CardNorfairL1, CardBrinstarBoss };
 
             Locations = new List<Location> {
                 new Location(this, 14, 0x8F84E4, LocationType.Chozo, "Super Missile (pink Brinstar)", Logic switch {

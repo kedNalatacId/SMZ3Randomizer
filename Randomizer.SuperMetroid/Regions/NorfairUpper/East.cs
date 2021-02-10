@@ -5,21 +5,14 @@ using static Randomizer.SuperMetroid.LocationType;
 using static Randomizer.SuperMetroid.ItemClass;
 
 namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
-
     class East : Region {
-
         public override string Name => "Norfair Upper East";
         public override string Area => "Norfair Upper";
 
         public East(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardLowerNorfairL1, CardNorfairBoss, CardCrateriaBoss };
+            RegionItems = new[] { CardNorfairBoss };
 
             Locations = new List<Location> {
-                new Location(this, 49, 0x8F8AE4, LocationType.Hidden, "Missile (lava room)", Minor, Logic switch {
-                    _ => new Requirement(items => items.Morph)
-                }),
-                // new Location(this, 49, "Missile (lava room)", Hidden, Minor, 0x78AE4, Logic switch
-
                 new Location(this, 61, 0x8F8C3E, LocationType.Chozo, "Reserve Tank, Norfair", Major, Logic switch {
                     Normal => items => items.CardNorfairL2 && items.Morph && (
                         items.SpaceJump ||
@@ -28,8 +21,6 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     ),
                     _ => new Requirement(items => items.CardNorfairL2 && items.Morph && items.Super)
                 }),
-                // new Location(this, 61, "Reserve Tank, Norfair", Chozo, Major, 0x78C3E, Logic switch
-
                 new Location(this, 62, 0x8F8C44, LocationType.Hidden, "Missile (Norfair Reserve Tank)", Minor, Logic switch {
                     Normal => items => items.CardNorfairL2 && items.Morph && (
                         items.SpaceJump ||
@@ -38,8 +29,6 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     ),
                     _ => new Requirement(items => items.CardNorfairL2 && items.Morph && items.Super)
                 }),
-                // new Location(this, 62, "Missile (Norfair Reserve Tank)", Hidden, Minor, 0x78C44, Logic switch
-
                 new Location(this, 63, 0x8F8C52, LocationType.Visible, "Missile (bubble Norfair green door)", Minor, Logic switch {
                     Normal => items => items.CardNorfairL2 && (
                         items.SpaceJump ||
@@ -48,13 +37,9 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     ),
                     _ => new Requirement(items => items.CardNorfairL2 && items.Super)
                 }),
-                // new Location(this, 63, "Missile (bubble Norfair green door)", Visible, Minor, 0x78C52, Logic switch
-
                 new Location(this, 64, 0x8F8C66, LocationType.Visible, "Missile (bubble Norfair)", Minor, Logic switch {
                     _ => new Requirement(items => items.CardNorfairL2)
                 }),
-                // new Location(this, 64, "Missile (bubble Norfair)", Visible, Minor, 0x78C66),
-
                 new Location(this, 65, 0x8F8C74, LocationType.Hidden, "Missile (Speed Booster)", Minor, Logic switch {
                     Normal => items => items.CardNorfairL2 && (
                         items.SpaceJump ||
@@ -63,8 +48,6 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     ),
                     _ => new Requirement(items => items.CardNorfairL2 && items.Super)
                 }),
-                // new Location(this, 65, "Missile (Speed Booster)", Hidden, Minor, 0x78C74, Logic switch
-
                 new Location(this, 66, 0x8F8C82, LocationType.Chozo, "Speed Booster", Major, Logic switch {
                     Normal => items => items.CardNorfairL2 && (
                         items.SpaceJump ||
@@ -73,8 +56,6 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     ),
                     _ => new Requirement(items => items.CardNorfairL2 && items.Super)
                 }),
-                // new Location(this, 66, "Speed Booster", Chozo, Major, 0x78C82, Logic switch
-
                 new Location(this, 67, 0x8F8CBC, LocationType.Visible, "Missile (Wave Beam)", Minor, Logic switch {
                     Normal => items => items.CardNorfairL2 && (
                         items.SpaceJump ||
@@ -85,8 +66,6 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     ),
                     _ => new Requirement(items => items.CanOpenRedDoors() && (items.CardNorfairL2 || items.Varia))
                 }),
-                // new Location(this, 67, "Missile (Wave Beam)", Visible, Minor, 0x78CBC, Logic switch
-
                 new Location(this, 68, 0x8F8CCA, LocationType.Chozo, "Wave Beam", Major, Logic switch {
                     Normal => items => items.CardNorfairL2 && (
                         items.SpaceJump ||
@@ -98,7 +77,6 @@ namespace Randomizer.SuperMetroid.Regions.NorfairUpper {
                     _ => new Requirement(items => items.CanOpenRedDoors() && (items.CardNorfairL2 || items.Varia) &&
                         (items.Morph || items.Grapple || items.HiJump && items.Varia || items.SpaceJump))
                 }),
-                // new Location(this, 68, "Wave Beam", Chozo, Major, 0x78CCA, Logic switch
             };
         }
 

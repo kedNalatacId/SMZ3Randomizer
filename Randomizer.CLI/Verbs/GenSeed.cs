@@ -20,7 +20,6 @@ namespace Randomizer.CLI.Verbs {
             { "AutoIPSPath", "/tmp" },
             { "GoFast", false },
             { "Ips", new List<string> {} },
-            { "Keycards", "None" },
             { "Loop", 1 },
             { "Multi", false },
             { "MysterySeed", false },
@@ -118,10 +117,6 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Path to asar executable; used with autoips. Possibly obviates the need for autoipsconfig")]
         public string AsarBin { get; set; }
 
-        [Option("keycards",
-            HelpText = "Whether to use KeyCards with Keysanity or not (default is None)")]
-        public string Keycards { get; set; }
-
         [Option("python",
             HelpText = "Name/Path to python executable; used with autoips. Defaults to 'python'")]
         public string PythonBin { get; set; }
@@ -189,11 +184,21 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Goal of Seed (default is DefeatMB)")]
         public string Goal { get; set; }
 
+        [Option("morph",
+            HelpText = "SM Morph Ball Location (default is Randomized)")]
+        public string MorphLocation { get; set; }
+
+        [Option("keycards",
+            HelpText = "Whether to use KeyCards with Keysanity or not (default is None)")]
+        public string Keycards { get; set; }
+
         public override IRandomizer NewRandomizer() => new SuperMetroid.Randomizer();
 
         public SMSeedOptions() {
             defaults.Add("Placement", "split");
             defaults.Add("Goal", "DefeatMB");
+            defaults.Add("MorphLocation","Randomized");
+            defaults.Add("Keycards", "None");
         }
     }
 
@@ -226,6 +231,10 @@ namespace Randomizer.CLI.Verbs {
         [Option('k', "keyshuffle",
             HelpText = "What level of key shuffle to use (default is None)")]
         public string KeyShuffle { get; set; }
+
+        [Option("keycards",
+            HelpText = "Whether to use KeyCards with Keysanity or not (default is None)")]
+        public string Keycards { get; set; }
 
         [Option("bossdrops",
             HelpText = "Whether to allow bosses to drop dungeon items (default is Randomized)")]
@@ -429,9 +438,6 @@ namespace Randomizer.CLI.Verbs {
             if (String.IsNullOrEmpty(opts.AutoIPSPath))
                 opts.AutoIPSPath = !String.IsNullOrEmpty(conf.AutoIPSPath) ? conf.AutoIPSPath : (string)opts.defaults["AutoIPSPath"];
 
-            if (String.IsNullOrEmpty(opts.Keycards))
-                opts.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)opts.defaults["Keycards"];
-
             if (String.IsNullOrEmpty(opts.SpriteURL))
                 opts.SpriteURL = !String.IsNullOrEmpty(conf.SpriteURL) ? conf.SpriteURL : (string)opts.defaults["SpriteURL"];
 
@@ -465,7 +471,6 @@ namespace Randomizer.CLI.Verbs {
                 ("gofast", opts.GoFast.ToString()),
                 ("mysteryseed", opts.MysterySeed.ToString()),
                 ("surpriseme", opts.SurpriseMe.ToString()),
-                ("keycards", opts.Keycards),
                 ("players", opts.Players.ToString()),
                 ("playername", opts.PlayerName),
                 ("race", opts.Race.ToString()),
@@ -496,6 +501,9 @@ namespace Randomizer.CLI.Verbs {
                 if (String.IsNullOrEmpty(smz3.KeyShuffle))
                     smz3.KeyShuffle = !String.IsNullOrEmpty(conf.Zelda.KeyShuffle) ? conf.Zelda.KeyShuffle : (string)smz3.defaults["KeyShuffle"];
 
+                if (String.IsNullOrEmpty(smz3.Keycards))
+                    smz3.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)smz3.defaults["Keycards"];
+
                 if (String.IsNullOrEmpty(smz3.BossDrops))
                     smz3.BossDrops = !String.IsNullOrEmpty(conf.Zelda.BossDrops) ? conf.Zelda.BossDrops : (string)smz3.defaults["BossDrops"];
 
@@ -515,6 +523,7 @@ namespace Randomizer.CLI.Verbs {
                     ("swordlocation", smz3.SwordLocation),
                     ("morphlocation", smz3.MorphLocation),
                     ("keyshuffle", smz3.KeyShuffle),
+                    ("keycards", smz3.Keycards),
                     ("bossdrops", smz3.BossDrops),
                     ("ganoninvincible", smz3.GanonInvincible),
                     ("goal", smz3.Goal),
@@ -531,9 +540,17 @@ namespace Randomizer.CLI.Verbs {
                 if (String.IsNullOrEmpty(sm.Goal))
                     sm.Goal = !String.IsNullOrEmpty(conf.Goal) ? conf.Goal : (string)sm.defaults["Goal"];
 
+                if (String.IsNullOrEmpty(sm.MorphLocation))
+                    sm.MorphLocation = !String.IsNullOrEmpty(conf.Metroid.MorphLocation) ? conf.Metroid.MorphLocation : (string)sm.defaults["MorphLocation"];
+
+                if (String.IsNullOrEmpty(sm.Keycards))
+                    sm.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)sm.defaults["Keycards"];
+
                 optionList.AddRange(new[] {
                     ("placement", sm.Placement),
                     ("goal", sm.Goal),
+                    ("morphlocation", sm.MorphLocation),
+                    ("keycards", sm.Keycards),
                 });
             }
 

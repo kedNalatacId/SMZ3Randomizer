@@ -3,9 +3,7 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Maridia {
-
     class Outer : SMRegion {
-
         public override string Name => "Maridia Outer";
         public override string Area => "Maridia";
 

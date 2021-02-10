@@ -2,16 +2,13 @@
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
-
     class Kraid : SMRegion, IReward {
-
         public override string Name => "Brinstar Kraid";
         public override string Area => "Brinstar";
 
         public RewardType Reward { get; set; } = RewardType.GoldenFourBoss;
 
         public Kraid(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardNorfairL1, CardNorfairL2 };
             Locations = new List<Location> {
                 new Location(this, 43, 0x8F899C, LocationType.Hidden, "Energy Tank, Kraid", items => items.CardBrinstarBoss),
                 new Location(this, 48, 0x8F8ACA, LocationType.Chozo, "Varia Suit", items => items.CardBrinstarBoss),

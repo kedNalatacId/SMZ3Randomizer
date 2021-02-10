@@ -3,16 +3,14 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid {
-
     class WreckedShip : SMRegion, IReward {
-
         public override string Name => "Wrecked Ship";
         public override string Area => "Wrecked Ship";
 
         public RewardType Reward { get; set; } = RewardType.GoldenFourBoss;
 
         public WreckedShip(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardWreckedShipL1, CardWreckedShipBoss };
+            RegionItems = new[] { CardWreckedShipL1 };
 
             Locations = new List<Location> {
                 new Location(this, 128, 0x8FC265, LocationType.Visible, "Missile (Wrecked Ship middle)", Logic switch {

@@ -52,9 +52,6 @@ namespace Randomizer.SuperMetroid {
                 });
             }
 
-            /* Priority fill items that needs to be placed first (will be placed in random order out of all items matching the types) */
-            // PriorityFill(new[] { Varia, Gravity }, ProgressionItems, new List<Item>(), Worlds);
-
             AssumedFill(progressionItems, baseItems, locations, Worlds);
 
             FastFill(niceItems, locations);
@@ -119,7 +116,7 @@ namespace Randomizer.SuperMetroid {
             var myItems = new List<Item>(items);
             var availableLocations = worlds.SelectMany(l => l.Locations).Where(x => x.Item != null).ToList();
             while (true) {
-                var searchLocations = availableLocations.AvailableWithinWorld(myItems);
+                var searchLocations = availableLocations.AvailableWithinWorld(myItems).ToList();
                 availableLocations = availableLocations.Except(searchLocations).ToList();
                 var foundItems = searchLocations.Select(x => x.Item).ToList();
                 if (foundItems.Count == 0)
@@ -142,20 +139,17 @@ namespace Randomizer.SuperMetroid {
             if (Config.MorphLocation == MorphLocation.Original)
                 FillItemAtLocation(progressionItems, ItemType.Morph, world.Locations.Get("Morphing Ball"));
 
-            /* Place a way to break bomb blocks. */
-            int choice = -1;
-            if (Config.SMLogic == SMLogic.Normal)
-                choice = Rnd.Next(2);
-            else
-                choice = Rnd.Next(3);
+            // Spice things up every so often
+            // We still have to place a way to break blocks directly after this...
+            if (Config.SMLogic != SMLogic.Normal && Rnd.Next(8) < 1)
+                FrontFillItemInWorld(world, progressionItems, ItemType.CardBrinstarL1, true);
 
-            if (!Config.UseKeycards)
-                choice++;
+            /* Place a way to break bomb blocks. */
+            int choice = Rnd.Next(Config.SMLogic == SMLogic.Normal ? 1 : 2);
 
             FrontFillItemInWorld(world, progressionItems, choice switch {
-                0 => ItemType.CardBrinstarL1,
+                0 => ItemType.ScrewAttack,
                 1 => ItemType.Morph,
-                2 => ItemType.ScrewAttack,
                 _ => ItemType.SpeedBooster,
             }, true);
 
@@ -199,8 +193,7 @@ namespace Randomizer.SuperMetroid {
                 locationToFill.Item = item;
                 itemPool.Remove(item);
             } else {
-// It's not needed to throw this; if we fail to fill the world we'll throw a different (catchable) error later
-//              throw new Exception("No location to place item:" + item.Name);
+                throw new CannotFillWorldException("No location to place item:" + item.Name);
             }
         }
 

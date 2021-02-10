@@ -3,16 +3,14 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
-
     class East : SMRegion, IReward {
-
         public override string Name => "Norfair Lower East";
         public override string Area => "Norfair Lower";
 
         public RewardType Reward { get; set; } = RewardType.GoldenFourBoss;
 
         public East(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardLowerNorfairBoss };
+            RegionItems = new[] { CardLowerNorfairBoss, CardCrateriaBoss };
 
             Locations = new List<Location> {
                 new Location(this, 74, 0x8F8FCA, LocationType.Visible, "Missile (lower Norfair above fire flea room)", Logic switch {
@@ -65,30 +63,6 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
                     /*Reverse Amphitheater*/
                     items.HasEnergyReserves(5)
                 )
-            };
-        }
-
-        bool CanExitThroughNorfair(Progression items) {
-            return Logic switch {
-                Normal =>
-                    /* Varia and Gravity for Reverse Lava Dive if missing LN-1 card */
-                    (items.CardLowerNorfairL1 || items.Gravity) && items.CardNorfairL2 ||
-                    items.Gravity && items.CanPassWaveGates(World) && items.SpeedBooster,
-                _ =>
-                    items.CardNorfairL2 ||
-                    /* Without UN-2 we need to check for Morph due to Reverse Amphitheater */
-                    items.Morph && items.CanPassWaveGates(World) && items.SpeedBooster,
-            };
-        }
-
-        // Todo: no guarantee of PBs on Hard can block green gate by falling at Mickey Mouse (but "solved" through PB front fill)
-        bool CanExitThroughPortal(Progression items) {
-            return Logic switch {
-                /* Through Acid Statue Room, then fight GT */
-                Normal => items.CanUsePowerBombs() && items.SpaceJump && (items.Super || items.Charge),
-                _ => /* GGG directly back to the LN portal */
-                    items.Super /* Green Gate */ ||
-                    items.CanUsePowerBombs() && items.SpaceJump && (items.Super || items.Charge),
             };
         }
 

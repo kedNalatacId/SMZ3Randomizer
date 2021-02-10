@@ -3,14 +3,12 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Crateria {
-
     class East : SMRegion {
-
         public override string Name => "Crateria East";
         public override string Area => "Crateria";
 
         public East(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardWreckedShipL1 };
+            RegionItems = new[] { CardWreckedShipBoss };
             Locations = new List<Location> {
                 new Location(this, 1, 0x8F81E8, LocationType.Visible, "Missile (outside Wrecked Ship bottom)", Logic switch {
                     Normal => items => items.Morph && (

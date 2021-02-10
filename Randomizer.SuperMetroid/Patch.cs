@@ -50,7 +50,6 @@ namespace Randomizer.SuperMetroid {
         readonly int seed;
         readonly Random rnd;
         List<(int offset, byte[] bytes)> patches;
-        // Dictionary<int, byte[]> patches;
 
         public Patch(World myWorld, List<World> allWorlds, string seedGuid, int seed, Random rnd) {
             this.myWorld = myWorld;
@@ -70,7 +69,7 @@ namespace Randomizer.SuperMetroid {
             // WriteItemLocations();
             // WriteAnimalSurprise();
             WriteGameTitle();
-            WriteGameModeData();
+            WriteCommonFlags();
             WriteRngBlock();
 
             return patches.ToDictionary(x => x.offset, x => x.bytes);
@@ -183,7 +182,7 @@ namespace Randomizer.SuperMetroid {
             patches.Add((Snes(0x80FF80), AsAscii(myWorld.Guid)));
         }
 
-        void WriteGameModeData() {
+        void WriteCommonFlags() {
             if (myWorld.Config.GameMode == GameMode.Multiworld) {
                 patches.Add((Snes(0xF47000), UshortBytes(0x0001)));
             }

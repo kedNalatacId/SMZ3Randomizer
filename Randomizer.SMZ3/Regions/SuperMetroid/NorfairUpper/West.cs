@@ -3,14 +3,12 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairUpper {
-
     class West : SMRegion {
-
         public override string Name => "Norfair Upper West";
         public override string Area => "Norfair Upper";
 
         public West(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardLowerNorfairL1, CardNorfairL2, CardNorfairBoss };
+            RegionItems = new[] { CardNorfairL2 };
             Locations = new List<Location> {
                 new Location(this, 49, 0x8F8AE4, LocationType.Hidden, "Missile (lava room)", Logic switch {
                     Normal => items => items.Varia && (

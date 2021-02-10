@@ -3,14 +3,12 @@ using static Randomizer.SMZ3.SMLogic;
 using static Randomizer.SMZ3.ItemType;
 
 namespace Randomizer.SMZ3.Regions.SuperMetroid.Brinstar {
-
     class Red : SMRegion {
-
         public override string Name => "Brinstar Red";
         public override string Area => "Brinstar";
 
         public Red(World world, Config config) : base(world, config) {
-            RegionItems = new[] { CardMaridiaL1, CardNorfairL1, CardBrinstarBoss };
+            RegionItems = new[] { CardBrinstarBoss };
             Locations = new List<Location> {
                 new Location(this, 38, 0x8F8876, LocationType.Chozo, "X-Ray Scope", Logic switch {
                     Normal => items => items.CanUsePowerBombs() && items.CanOpenRedDoors() && (items.Grapple || items.SpaceJump) &&
