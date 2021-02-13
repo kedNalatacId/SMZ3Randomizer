@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
+using static Randomizer.CLI.FileHelper;
 
 namespace Randomizer.CLI.FileData {
-
     static class Rom {
+        static Lazy<byte[]> BaseRom;
 
         public static byte[] CombineSMZ3Rom(Stream smRom, Stream z3Rom) {
             int pos;
@@ -56,6 +57,20 @@ namespace Randomizer.CLI.FileData {
                 bytes.CopyTo(rom, offset);
         }
 
-    }
+        public static byte[] ConstructBaseRom(string smFile, string z3File, string base_ips) {
+            if (BaseRom != null)
+                return (byte[]) BaseRom.Value.Clone();
 
+            BaseRom = new Lazy<byte[]> (() => {
+                using var sm = File.OpenRead(smFile);
+                using var z3 = File.OpenRead(z3File);
+                var rom = FileData.Rom.CombineSMZ3Rom(sm, z3);
+                using var ips = OpenReadInnerStream(base_ips);
+                FileData.Rom.ApplyIps(rom, ips);
+                return rom;
+            });
+
+            return (byte[]) BaseRom.Value.Clone();
+        }
+    }
 }

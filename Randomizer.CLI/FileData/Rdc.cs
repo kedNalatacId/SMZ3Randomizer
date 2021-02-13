@@ -8,11 +8,10 @@ using System.Text.RegularExpressions;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static Randomizer.CLI.FileHelper;
 
 namespace Randomizer.CLI.FileData {
-
     class Rdc {
-
         readonly static char[] header = "RETRODATACONTAINER".ToCharArray();
         const int Version = 1;
 
@@ -110,6 +109,18 @@ namespace Randomizer.CLI.FileData {
             writer.WriteByte(0);
             return writer.ToArray();
         }
+
+        public static void ApplyRdcResources(byte[] rom, IEnumerable<string> rdc) {
+            foreach (var resource in rdc) {
+                using var stream = OpenReadInnerStream(resource);
+                var content = Rdc.Parse(stream);
+                if (content.TryParse<LinkSprite>(stream, out var block))
+                    (block as DataBlock)?.Apply(rom);
+                if (content.TryParse<SamusSprite>(stream, out block))
+                    (block as DataBlock)?.Apply(rom);
+            }
+        }
+
 
         // online utilities for retrieving community sprites as per new guidelines
 
@@ -282,7 +293,6 @@ namespace Randomizer.CLI.FileData {
     }
 
     class MetaDataBlock : BlockType {
-
         public uint Type { get; } = 0;
 
         public JToken Content { get; private set; }
@@ -312,11 +322,9 @@ namespace Randomizer.CLI.FileData {
             data.Write((uint) bytes.Length);
             data.Write(bytes);
         }
-
     }
 
     abstract class DataBlock : BlockType {
-
         public abstract uint Type { get; }
 
         protected abstract IList<(IEnumerable<int>, int, IEnumerable<int>)> Manifest { get; }
@@ -483,7 +491,5 @@ namespace Randomizer.CLI.FileData {
         public byte[] FetchPowerStandardPalette() {
             return content[20];
         }
-
     }
-
 }
