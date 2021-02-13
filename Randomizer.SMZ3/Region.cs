@@ -81,29 +81,29 @@ namespace Randomizer.SMZ3 {
                         if (item.IsBossKeycard) {
                             return Config.RandomCards["boss"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is Z3Region,
-                                RandomizedItemLocation.Away  => this is SMRegion,
+                                RandomizedItemLocation.Local => this is SMRegion,
+                                RandomizedItemLocation.Away  => this is Z3Region,
                                 _ => true
                             };
                         } else if (item.IsCardOne) {
                             return Config.RandomCards["one"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is Z3Region,
-                                RandomizedItemLocation.Away  => this is SMRegion,
+                                RandomizedItemLocation.Local => this is SMRegion,
+                                RandomizedItemLocation.Away  => this is Z3Region,
                                 _ => true
                             };
                         } else if (item.IsCardTwo) {
                             return Config.RandomCards["two"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is Z3Region,
-                                RandomizedItemLocation.Away  => this is SMRegion,
+                                RandomizedItemLocation.Local => this is SMRegion,
+                                RandomizedItemLocation.Away  => this is Z3Region,
                                 _ => true
                             };
                         } else {
                             return Config.RandomCards["area"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is Z3Region,
-                                RandomizedItemLocation.Away  => this is SMRegion,
+                                RandomizedItemLocation.Local => this is SMRegion,
+                                RandomizedItemLocation.Away  => this is Z3Region,
                                 _ => true
                             };
                         }
@@ -131,29 +131,29 @@ namespace Randomizer.SMZ3 {
                         if (item.IsMap) {
                             return Config.RandomKeys["map"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is SMRegion,
-                                RandomizedItemLocation.Away  => this is Z3Region,
+                                RandomizedItemLocation.Local => this is Z3Region,
+                                RandomizedItemLocation.Away  => this is SMRegion,
                                 _ => true
                             };
                         } else if (item.IsCompass) {
                             return Config.RandomKeys["compass"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is SMRegion,
-                                RandomizedItemLocation.Away  => this is Z3Region,
+                                RandomizedItemLocation.Local => this is Z3Region,
+                                RandomizedItemLocation.Away  => this is SMRegion,
                                 _ => true
                             };
                         } else if (item.IsKey) {
                             return Config.RandomKeys["small_key"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is SMRegion,
-                                RandomizedItemLocation.Away  => this is Z3Region,
+                                RandomizedItemLocation.Local => this is Z3Region,
+                                RandomizedItemLocation.Away  => this is SMRegion,
                                 _ => true
                             };
                         } else if (item.IsBigKey) {
                             return Config.RandomKeys["big_key"] switch {
                                 RandomizedItemLocation.Home  => IsRegionItem(item),
-                                RandomizedItemLocation.Local => this is SMRegion,
-                                RandomizedItemLocation.Away  => this is Z3Region,
+                                RandomizedItemLocation.Local => this is Z3Region,
+                                RandomizedItemLocation.Away  => this is SMRegion,
                                 _ => true
                             };
                         }

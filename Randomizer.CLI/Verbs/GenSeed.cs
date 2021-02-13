@@ -259,6 +259,7 @@ namespace Randomizer.CLI.Verbs {
             defaults.Add("GanonInvincible", "Never");
             defaults.Add("Goal", "DefeatBoth");
             defaults.Add("KeyShuffle", "None");
+            defaults.Add("Keycards", "None");
             defaults.Add("LiveDangerously", false);
             defaults.Add("MorphLocation", "Randomized");
             defaults.Add("RandomFlyingTiles", false);
