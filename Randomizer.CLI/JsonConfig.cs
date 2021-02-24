@@ -75,25 +75,52 @@ namespace Randomizer.CLI {
     }
 
     // The below are Used for parsing sprite inventory data
-    public class SpriteEntry {
+    public class SpriteTags {
+        public string character { get; set; }
+        public string game { get; set; }
+        public string gender { get; set; }
+        public string universe { get; set; }
+        public string[] type { get; set; }
+    }
+
+    public abstract class SpriteEntry {
         public string name { get; set; }
         public string author { get; set; }
         public int version { get; set; }
         public string file { get; set; }
-        public string[] tags { get; set; }
         public bool demonetized { get; set; }
         public string[] note { get; set; }
         public string[] usage { get; set; }
     }
 
-    public class SpriteEntryClass {
-        public Dictionary<string, SpriteEntry> denied { get; set; }
-        public Dictionary<string, SpriteEntry> approved { get; set; }
-        public Dictionary<string, SpriteEntry> waiting { get; set; }
+    public class SMSpriteEntry : SpriteEntry {
+        public SpriteTags tags { get; set; }
+    }
+
+    public class Z3SpriteEntry : SpriteEntry {
+        public string[] tags { get; set; }
+    }
+
+    public abstract class SpriteEntryClass {
+        // public virtual Dictionary<string, SpriteEntry> denied { get; set; }
+        // public virtual Dictionary<string, SpriteEntry> approved { get; set; }
+        // public virtual Dictionary<string, SpriteEntry> waiting { get; set; }
+    }
+
+    public class SMSpriteEntryClass : SpriteEntryClass {
+        public Dictionary<string, SMSpriteEntry> denied { get; set; }
+        public Dictionary<string, SMSpriteEntry> approved { get; set; }
+        public Dictionary<string, SMSpriteEntry> waiting { get; set; }
+    }
+
+    public class Z3SpriteEntryClass : SpriteEntryClass {
+        public Dictionary<string, Z3SpriteEntry> denied { get; set; }
+        public Dictionary<string, Z3SpriteEntry> approved { get; set; }
+        public Dictionary<string, Z3SpriteEntry> waiting { get; set; }
     }
 
     public class SpriteInventory {
-        public SpriteEntryClass z3 { get; set; }
-        public SpriteEntryClass m3 { get; set; }
+        public Z3SpriteEntryClass z3 { get; set; }
+        public SMSpriteEntryClass m3 { get; set; }
     }
 }

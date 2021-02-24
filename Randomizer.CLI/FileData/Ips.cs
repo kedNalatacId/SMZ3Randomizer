@@ -18,7 +18,7 @@ namespace Randomizer.CLI.FileData {
         }
 
         // when using AutoIPS
-        public static string ConstructBaseIps(IRandomizer randomizer, GenSeedOptions opts, string[] authors) {
+        public static string ConstructBaseIps(IRandomizer randomizer, GenSeedOptions opts, IEnumerable<SpriteMetaData> sprites) {
             var ips_file = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
 
             string ips_opts = $"build.py --output {ips_file}";
@@ -26,16 +26,19 @@ namespace Randomizer.CLI.FileData {
                 ips_opts += $" --config {opts.AutoIPSConfig}";
             if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
                 ips_opts += $" --asar {opts.AsarBin}";
-            if (authors.Length > 0) {
-                if (!String.IsNullOrEmpty(authors[0]))
-                    ips_opts += $" --smspriteauthor {authors[0]}";
-                if (authors.Length > 1 && !String.IsNullOrEmpty(authors[1]))
-                    ips_opts += $" --z3spriteauthor {authors[1]}";
-            }
             if ((bool)opts.SurpriseMe)
                 ips_opts += " --surprise_me";
             if (opts is SMSeedOptions)
                 ips_opts += " --mode sm";
+
+            foreach (var smd in sprites) {
+                if (String.IsNullOrEmpty(smd.Author))
+                    continue;
+                ips_opts += smd.Game switch {
+                    GameName.Metroid => $" --smspriteauthor {smd.Author}",
+                    _                => $" --z3spriteauthor {smd.Author}",
+                };
+            }
 
             // The value can be "randomized", so we have to determine what was chosen
             // This allows us to turn on and off keycards based on the seeds chosen values!

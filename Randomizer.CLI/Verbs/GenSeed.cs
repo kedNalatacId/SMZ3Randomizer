@@ -116,21 +116,28 @@ namespace Randomizer.CLI.Verbs {
         }
 
         static void WriteRom(string filename, IRandomizer rando, ISeedData data, Dictionary<string, string> options, GenSeedOptions opts) {
-            string[] authors = new string[2];
             IEnumerable<string> sprites = new List<string> {};
+            IEnumerable<SpriteMetaData> RandoSprites = new List<SpriteMetaData> {};
             var world = data.Worlds.First();
 
             // Get the sprites ahead of time so we can get the authors
             if ((bool)opts.SurpriseMe) {
-                (authors, sprites) = Rdc.GetRandomSprites(options);
+                RandoSprites = Rdc.GetRandomSprites(options);
+                sprites = sprites.Concat(RandoSprites.Select(x => x.SpriteData).ToList());
             } else {
+                RandoSprites = Rdc.GetSpecificSprites(options, opts.Sprites);
+
                 sprites = opts.Sprites;
+                foreach (var spr in RandoSprites) {
+                    sprites = sprites.Where(x => x != spr.SearchTerm).ToList();
+                    sprites = sprites.Concat(new List<string> { spr.SpriteData });
+                }
             }
 
             // The IPS file gets applied during writing,
             // so it has to remain in context after ConstructRom is over.
             // So we make it here, then delete it before leaving scope.
-            string base_ips = (bool)opts.AutoIPS ? Ips.ConstructBaseIps(rando, opts, authors) : opts.Ips.First();
+            string base_ips = (bool)opts.AutoIPS ? Ips.ConstructBaseIps(rando, opts, RandoSprites) : opts.Ips.First();
 
             var rom = Rom.ConstructBaseRom(opts.smFile, opts.z3File, base_ips);
             Rom.ApplySeed(rom, world.Patches);

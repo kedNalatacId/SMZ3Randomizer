@@ -50,7 +50,7 @@ namespace Randomizer.CLI.Verbs {
         public bool? Multi { get; set; }
         public bool? Single => !Multi;
 
-        [Option(
+        [Option("playername",
             HelpText = "Set the player's name when single world")]
         public string PlayerName { get; set; }
 
@@ -94,7 +94,7 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Generate a specific seed")]
         public string Seed { get; set; }
 
-        [Option(
+        [Option("ips",
             HelpText = "Specify paths for IPS patches to be applied in the specified order.")]
         public IEnumerable<string> Ips { get; set; }
 
@@ -118,7 +118,7 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Name/Path to python executable; used with autoips. Defaults to 'python'")]
         public string PythonBin { get; set; }
 
-        [Option(
+        [Option("sprites",
             HelpText = "Specify paths for RDC resources to be applied in the specified order.")]
         public IEnumerable<string> Sprites { get; set; }
 
@@ -142,15 +142,15 @@ namespace Randomizer.CLI.Verbs {
             HelpText = "Write patch and playthrough/spoiler to the console instead of directly to files")]
         public bool? ToConsole { get; set; }
 
-        [Option(
+        [Option("playthrough",
             HelpText = "Show json formatted playthrough for each seed")]
         public bool? Playthrough { get; set; }
 
-        [Option(
+        [Option("spoiler",
             HelpText = "Show json formatted spoiler for each seed (turns Playthrough off)")]
         public bool? Spoiler { get; set; }
 
-        [Option(
+        [Option("patch",
             HelpText = "Show json formated patch for each world in the seed")]
         public bool? Patch { get; set; }
 
@@ -364,11 +364,6 @@ namespace Randomizer.CLI.Verbs {
     
             if ((bool)options.Playthrough && (bool)options.Spoiler)
                 throw new ArgumentException("Playthrough and Spoiler are mutually exclusive.");
-    
-            foreach (var r in options.Sprites) {
-                if (!File.Exists(r))
-                    throw new ArgumentException($"RDC File {r} doesn't exist.");
-            }
     
             if (String.IsNullOrEmpty(options.smFile) || !File.Exists(options.smFile))
                 throw new FileNotFoundException($"Could not find Super Metroid file: {options.smFile}");

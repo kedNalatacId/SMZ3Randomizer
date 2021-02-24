@@ -124,9 +124,8 @@ namespace Randomizer.CLI.FileData {
 
         // online utilities for retrieving community sprites as per new guidelines
 
-        public static (string[], IEnumerable<string>) GetRandomSprites(Dictionary<string, string> opts) {
-            List<string> authors = new List<string>();
-            IEnumerable<string> sprites = new List<string> {};
+        public static IEnumerable<SpriteMetaData> GetRandomSprites(Dictionary<string, string> opts) {
+            IEnumerable<SpriteMetaData> sprites = new List<SpriteMetaData> {};
             Random tmp_rnd = new Random();
 
             SpriteInventory inventory = null;
@@ -142,8 +141,13 @@ namespace Randomizer.CLI.FileData {
                 if (onlineSprite.IsMatch(smSprite)) {
                     smSprite = ConvertSprite("sm", smSprite, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
                 }
-                authors.Add(FormatAuthor(author));
-                sprites = sprites.Concat(new string[] { smSprite });
+                sprites = sprites.Concat(new SpriteMetaData[] {
+                    new SpriteMetaData {
+                        Game       = GameName.Metroid,
+                        Author     = author,
+                        SpriteData = smSprite
+                    }
+                });
             }
 
             // 20% chance of OG Link
@@ -152,11 +156,68 @@ namespace Randomizer.CLI.FileData {
                 if (onlineSprite.IsMatch(z3Sprite)) {
                     z3Sprite = ConvertSprite("z3", z3Sprite, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
                 }
-                authors.Add(FormatAuthor(author));
-                sprites = sprites.Concat(new string[] { z3Sprite });
+                sprites = sprites.Concat(new SpriteMetaData[] {
+                    new SpriteMetaData {
+                        Game       = GameName.Zelda,
+                        Author     = author,
+                        SpriteData = z3Sprite
+                    }
+                });
             }
 
-            return (authors.ToArray(), sprites);
+            return sprites;
+        }
+
+        public static IEnumerable<SpriteMetaData> GetSpecificSprites(Dictionary<string, string> opts, IEnumerable<string> sprites) {
+            IEnumerable<SpriteMetaData> smd = new List<SpriteMetaData> {};
+            IEnumerable<string> to_remove = new List<string> {};
+
+            SpriteInventory inventory = null;
+            try {
+                inventory = GetSpriteList(opts["SpriteURL"], opts["SpriteCachePath"]);
+            } catch (Exception) { }
+
+            Regex onlineSprite = new Regex("^http", RegexOptions.IgnoreCase);
+
+            string zelda_dir = String.Join("", Path.Join("", "z3", ""), "|.zspr");
+            Regex is_zelda     = new Regex(zelda_dir, RegexOptions.IgnoreCase);
+
+            foreach (string s in sprites) {
+                GameName spriteGame = GameName.Metroid;
+                string spriteAuthor = "";
+                string spriteData   = "";
+                bool found          = true;
+
+                if (File.Exists(s)) {
+                    spriteGame = is_zelda.IsMatch(s) ? GameName.Zelda : GameName.Metroid;
+                    spriteData = s;
+                } else if (inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Count() > 0) {
+                    spriteGame   = GameName.Metroid;
+                    spriteAuthor = inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Select(x => x.Value.author).FirstOrDefault();
+                    spriteData   = inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Select(x => x.Value.file).FirstOrDefault();
+                    if (onlineSprite.IsMatch(spriteData)) {
+                        spriteData = ConvertSprite("sm", spriteData, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
+                    }
+               } else if (inventory.z3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Count() > 0) {
+                    spriteGame   = GameName.Zelda;
+                    spriteAuthor = inventory.z3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Select(x => x.Value.author).FirstOrDefault();
+                    spriteData   = inventory.z3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Select(x => x.Value.file).FirstOrDefault();
+                    if (onlineSprite.IsMatch(spriteData)) {
+                        spriteData = ConvertSprite("z3", spriteData, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
+                    }
+                } else {
+                    found = false;
+                    Console.WriteLine($"Couldn't find match for: {s}... skipping");
+                }
+
+                if (found) {
+                    smd = smd.Concat(new SpriteMetaData[] { new SpriteMetaData {
+                        Game = spriteGame, Author = spriteAuthor, SpriteData = spriteData, SearchTerm = s
+                    }});
+                }
+            }
+
+            return smd;
         }
 
         public static SpriteInventory GetSpriteList(string SpriteURL, string SpriteCachePath) {
@@ -195,8 +256,9 @@ namespace Randomizer.CLI.FileData {
         // two current issues with the json:
         // 1. some notes aren't arrays
         // 2. the Metroid "denied" section is an array instead of a hash
-        public static string massageSpriteList(string spriteList) {
+        private static string massageSpriteList(string spriteList) {
             spriteList = Regex.Replace(spriteList, "note\": (\"[^\"]*\")", "note\": [ $1 ]");
+            spriteList = Regex.Replace(spriteList, "type\": (\"[^\"]*\")", "type\": [ $1 ]");
             spriteList = Regex.Replace(spriteList, "denied\": \\[]", "denied\": {}");
             return spriteList;
         }
@@ -229,7 +291,7 @@ namespace Randomizer.CLI.FileData {
             return spriteFile;
         }
 
-        public static (string, string) GetRandomSamusSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+        private static (string, string) GetRandomSamusSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
             string[] authors = null;
             string author = "";
             string[] sm_sprites = null;
@@ -252,7 +314,7 @@ namespace Randomizer.CLI.FileData {
             return (author, sm_sprites[chosen]);
         }
 
-        public static (string, string) GetRandomLinkSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
+        private static (string, string) GetRandomLinkSprite(string SpriteCachePath, SpriteInventory inventory, string avoid) {
             string[] authors = null;
             string author = "";
             string[] z3_sprites = null;
@@ -276,13 +338,22 @@ namespace Randomizer.CLI.FileData {
         }
 
         // We'll have to check this on the backend, but check it here as well
-        public static string FormatAuthor(string author) {
+        private static string FormatAuthor(string author) {
             author = Regex.Replace(author, @"[^\u0000-\u007F]+", string.Empty);
             author = Regex.Replace(author, @"[ ]{2,}", " ");
             if (author.Length > 30)
                 author = author.Substring(0, 30);
             return author;
         }
+    }
+
+    // These two support the infrastructure to make sure the sprite name are put on the correct sprite
+    public enum GameName { Metroid, Zelda }
+    class SpriteMetaData {
+        public GameName Game { get; set; }
+        public string Author { get; set; }
+        public string SpriteData { get; set; }
+        public string SearchTerm { get; set; } = "";
     }
 
     interface BlockType {
