@@ -41,6 +41,6 @@
     "SpriteURL": "http://smalttpr.mymm1.com/sprites/",
     "SpriteCachePath": "D:\Users\test\sprites",
     "SpriteSomethingBin": "D:\Users\test\SpriteSomething\SpriteSomething.py",
-    "Sprites": [ "D:\Users\test\sprites\sm\dark_samus.2.sm.rdc.gz", "D:\Users\test\sprites\z3\toadette.2.rdc" ],
+    "Sprites": [ "dark_samus", "toadette" ],
     "AvoidSprites": [ "hitbox", "cursor", "eggplant" ]
 }
