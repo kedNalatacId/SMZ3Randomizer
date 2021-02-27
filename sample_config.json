@@ -5,6 +5,7 @@
         "Keycards": "Exist"
         "MorphLocation": "Original",
         "Placement": "Split",
+        "SMControls": "{'Jump': 'R', 'AngleUp': 'A'}"
     },
     "Zelda": {
         "z3File": ".\Zelda_no_Densetsu_-_Kamigami_no_Triforce_Japan.sfc",

@@ -201,3 +201,4 @@ Further changes that have been added:
     - sprite authors are injected into the credits
     - sprites in "SurpriseMe" mode are only allowed to be "approved for SMZ3" sprites
         - Please don't use sprites without the author's permission
+- Super Metroid Controls can be specified before starting the ROM

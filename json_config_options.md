@@ -170,6 +170,15 @@ Only inside the generic JSON block.
     - Optional
     - Well... this is really only used in SMZ3
     - Sets the save file name and "Link's House" name to PlayerName
+- SMControls
+    - Optional
+    - Sets the Super Metroid controls before starting the game
+    - stringified JSON dictionary (see sample)
+        - The sample in the file is ridiculous on purpose
+    - Allowed controls:
+        - Dash, Shot, Jump, ItemCancel, ItemSelect, AngleUp, AngleDown
+    - Allowed Buttons:
+        - A, B, X, Y, L, R, Select, None
 - Race
     - Optional
     - Boolean
