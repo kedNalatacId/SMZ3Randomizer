@@ -172,7 +172,5 @@ namespace Randomizer.SMZ3 {
         public virtual bool CanEnter(Progression items) {
             return true;
         }
-
     }
-
 }

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using CommandLine;
 using System.Collections.Generic;
 using Randomizer.Shared.Contracts;
@@ -26,6 +27,7 @@ namespace Randomizer.CLI.Verbs {
             { "Players", 1 },
             { "Playthrough", false },
             { "PythonBin", "python" },
+            { "SMControls", "" },
             { "SMLogic", "Normal" },
             { "smFile", @".\Super_Metroid_JU_.sfc" },
             { "Spoiler", false },
@@ -57,6 +59,10 @@ namespace Randomizer.CLI.Verbs {
         [Option("smlogic",
             HelpText = "Super Metroid Logic (default is Normal)")]
         public string SMLogic { get; set; }
+
+        [Option("smcontrols",
+            HelpText = "JSON list of Super Metroid controls as a string")]
+        public string SMControls { get; set; }
 
         [Option('g', "gofast",
             HelpText = "faster... must go faster... (early boots/speed; default is false)")]
@@ -198,6 +204,9 @@ namespace Randomizer.CLI.Verbs {
     
             if (String.IsNullOrEmpty(opts.SMLogic))
                 opts.SMLogic = !String.IsNullOrEmpty(conf.Metroid.SMLogic) ? conf.Metroid.SMLogic : (string)opts.defaults["SMLogic"];
+
+            if (String.IsNullOrEmpty(opts.SMControls))
+                opts.SMControls = !String.IsNullOrEmpty(conf.Metroid.SMControls) ? conf.Metroid.SMControls : (string)opts.defaults["SMControls"];
     
             if (opts.Players == 0)
                 opts.Players = conf.Players > 0 ? conf.Players : (int)opts.defaults["Players"];
@@ -254,6 +263,7 @@ namespace Randomizer.CLI.Verbs {
                 ("playername", opts.PlayerName),
                 ("race", opts.Race.ToString()),
                 ("smlogic", opts.SMLogic),
+                ("smcontrols", opts.SMControls),
                 ("loop", opts.Loop.ToString()),
     
                 // These options are passed this way when getting a random sprite (easier)
@@ -336,6 +346,19 @@ namespace Randomizer.CLI.Verbs {
             return optionList;
         }
 
+        public static bool BinaryExistsInPath(string binary) {
+            if (File.Exists(binary))
+                return true;
+
+            var paths = Environment.GetEnvironmentVariable("PATH");
+            foreach (var path in paths.Split(Path.PathSeparator)) {
+                if (File.Exists(Path.Combine(path, binary)))
+                    return true;
+            }
+
+            return false;
+        }
+
         public static void validateOptions(GenSeedOptions options) {
             if (options.Players < 1 || options.Players > 64)
                 throw new ArgumentOutOfRangeException("players", "The players parameter must fall within the range 1-64");
@@ -346,6 +369,9 @@ namespace Randomizer.CLI.Verbs {
                 if (!Directory.Exists(options.AutoIPSPath))
                     throw new DirectoryNotFoundException($"Could not find --autoipspath {options.AutoIPSPath}");
     
+                if (!String.IsNullOrEmpty(options.AutoIPSConfig) && !File.Exists(options.AutoIPSConfig))
+                    throw new FileNotFoundException($"AutoIPSConfig specified but doesn't exist: {options.AutoIPSConfig}");
+
                 // WIP -- have to figure why looping with autoips is creating broken seeds
                 // Until then, don't allow both
                 if (options.Loop != 1)
@@ -357,9 +383,33 @@ namespace Randomizer.CLI.Verbs {
                     throw new ArgumentException("Must either set --ips <file> or --autoips");
             }
     
+            // Utilities needed for either AutoIPS or SurpriseMe mode
+            if (options.AutoIPS == true || options.SurpriseMe == true) {
+                if (!BinaryExistsInPath(options.AsarBin))
+                    throw new FileNotFoundException($"Could not find AsarBin: ${options.AsarBin}");
+                if (!BinaryExistsInPath(options.PythonBin))
+                    throw new FileNotFoundException($"Could not find PythonBin: ${options.PythonBin}");
+            }
+
+            // until numbers get patched in (or found?)
+            if (!String.IsNullOrEmpty(options.PlayerName) && Regex.IsMatch(options.PlayerName, "[1-9]"))
+                throw new ArgumentException("Player Names don't currently support numerals.");
+
+            if (options.SurpriseMe == true) {
+                if (!Directory.Exists(options.SpriteCachePath))
+                    throw new DirectoryNotFoundException($"Directory for Sprite Cache Path does not exist: {options.SpriteCachePath}");
+                if (!BinaryExistsInPath(options.SpriteSomethingBin))
+                    throw new FileNotFoundException($"Could not find SpriteSomethingBin: {options.SpriteSomethingBin}");
+                // Check that we have a valid URL; calling new throws an Exception for us
+                var uri = new Uri(options.SpriteURL);
+                // This isn't needed, but makes sure a warning isn't thrown that uri isn't used
+//              if (uri == null)
+//                  throw new ArgumentException($"Invalid Sprite URL: {options.SpriteURL}");
+            }
+
             foreach (var i in options.Ips) {
                 if (!File.Exists(i))
-                    throw new ArgumentException($"IPS File {i} doesn't exist.");
+                    throw new FileNotFoundException($"IPS File {i} doesn't exist.");
             }
     
             if ((bool)options.Playthrough && (bool)options.Spoiler)
@@ -370,6 +420,12 @@ namespace Randomizer.CLI.Verbs {
     
             if (String.IsNullOrEmpty(options.z3File) || !File.Exists(options.z3File))
                 throw new FileNotFoundException($"Could not find Zelda file: {options.z3File}");
+
+            if (!String.IsNullOrEmpty(options.OutputFile)) {
+                var basePath = Path.GetDirectoryName(options.OutputFile);
+                if (!Directory.Exists(basePath))
+                    throw new DirectoryNotFoundException($"Directory for output file does not exist: {basePath}");
+            }
         }
     }
 

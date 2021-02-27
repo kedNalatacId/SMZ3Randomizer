@@ -107,6 +107,7 @@ namespace Randomizer.SMZ3 {
 
             WriteStringTable();
             WriteSMKeyCardDoors();
+            WriteSMControls();
             WriteZ3KeysanityFlags();
             WritePlayerNames();
             WriteSeedData();
@@ -816,6 +817,65 @@ namespace Randomizer.SMZ3 {
             }
 
             patches.Add((Snes(0x8f0000 + plmTablePos), new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }));
+        }
+
+        /* default SM controls:
+            01:B325: 8DB0 09A9 8000 ; Jump:       A
+            01:B32b: 8DB4 09A9 0080 ; Dash:       B
+            01:B331: 8DB6 09A9 4000 ; Shot:       X
+            01:B337: 8DB2 09A9 0040 ; ItemCancel: Y
+            01:B33D: 8DB8 09A9 0020 ; ItemSelect: Select
+            01:b343: 8DBA 09A9 1000 ; AngleUp:    R
+            01:b349: 8DBE 09A9 2000 ; AngleDown:  L
+        */
+        /* Technically this is slightly broken; it allows assigning the same button to multiple things. */
+        // This is only temporarily here... it should move to a post-rom customization module... (but it works for now)
+        void WriteSMControls() {
+            if (String.IsNullOrEmpty(myWorld.Config.SMControls))
+                return;
+
+            Dictionary<string, string> controls = null;
+
+            try {
+                controls = JsonConvert.DeserializeObject<Dictionary<string,string>>(myWorld.Config.SMControls);
+            } catch(Exception) {
+                return;
+            }
+
+            Dictionary<string, byte[]> SMButtons = new Dictionary<string, byte[]> {
+                { "Select", new byte[] { 0x00, 0x20 } },
+                { "A",      new byte[] { 0x80, 0x00 } },
+                { "B",      new byte[] { 0x00, 0x80 } },
+                { "X",      new byte[] { 0x40, 0x00 } },
+                { "Y",      new byte[] { 0x00, 0x40 } },
+                { "L",      new byte[] { 0x20, 0x00 } },
+                { "R",      new byte[] { 0x10, 0x00 } },
+                { "None",   new byte[] { 0x00, 0x00 } }
+            };
+            Dictionary<string, string> defaults = new Dictionary<string, string> {
+                { "Jump", "A" },
+                { "Dash", "B" },
+                { "Shot", "X" },
+                { "ItemCancel", "Y" },
+                { "ItemSelect", "Select" },
+                { "AngleUp", "R" },
+                { "AngleDown", "L" },
+            };
+
+            patches.Add((0x01b325, SMButtons[controls.ContainsKey("Jump") ? controls["Jump"] : defaults["Jump"]]));
+            patches.Add((0x02f233, SMButtons[controls.ContainsKey("Jump") ? controls["Jump"] : defaults["Jump"]]));
+            patches.Add((0x01b32b, SMButtons[controls.ContainsKey("Dash") ? controls["Dash"] : defaults["Dash"]]));
+            patches.Add((0x02f239, SMButtons[controls.ContainsKey("Dash") ? controls["Dash"] : defaults["Dash"]]));
+            patches.Add((0x01b331, SMButtons[controls.ContainsKey("Shot") ? controls["Shot"] : defaults["Shot"]]));
+            patches.Add((0x02f22d, SMButtons[controls.ContainsKey("Shot") ? controls["Shot"] : defaults["Shot"]]));
+            patches.Add((0x01b337, SMButtons[controls.ContainsKey("ItemCancel") ? controls["ItemCancel"] : defaults["ItemCancel"]]));
+            patches.Add((0x02f23f, SMButtons[controls.ContainsKey("ItemCancel") ? controls["ItemCancel"] : defaults["ItemCancel"]]));
+            patches.Add((0x01b33d, SMButtons[controls.ContainsKey("ItemSelect") ? controls["ItemSelect"] : defaults["ItemSelect"]]));
+            patches.Add((0x02f245, SMButtons[controls.ContainsKey("ItemSelect") ? controls["ItemSelect"] : defaults["ItemSelect"]]));
+            patches.Add((0x01b343, SMButtons[controls.ContainsKey("AngleUp") ? controls["AngleUp"] : defaults["AngleUp"]]));
+            patches.Add((0x02f24b, SMButtons[controls.ContainsKey("AngleUp") ? controls["AngleUp"] : defaults["AngleUp"]]));
+            patches.Add((0x01b349, SMButtons[controls.ContainsKey("AngleDown") ? controls["AngleDown"] : defaults["AngleDown"]]));
+            patches.Add((0x02f251, SMButtons[controls.ContainsKey("AngleDown") ? controls["AngleDown"] : defaults["AngleDown"]]));
         }
 
         void WriteDiggingGameRng() {

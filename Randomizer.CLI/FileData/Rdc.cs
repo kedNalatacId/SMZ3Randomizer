@@ -179,8 +179,8 @@ namespace Randomizer.CLI.FileData {
 
             Regex onlineSprite = new Regex("^http", RegexOptions.IgnoreCase);
 
-            string zelda_dir = String.Join("", Path.Join("", "z3", ""), "|.zspr");
-            Regex is_zelda     = new Regex(zelda_dir, RegexOptions.IgnoreCase);
+            string separator = Path.PathSeparator.ToString();
+            Regex is_zelda   = new Regex($"{separator}z3{separator}" + @"|.zspr", RegexOptions.IgnoreCase);
 
             foreach (string s in sprites) {
                 GameName spriteGame = GameName.Metroid;
@@ -188,7 +188,19 @@ namespace Randomizer.CLI.FileData {
                 string spriteData   = "";
                 bool found          = true;
 
-                if (File.Exists(s)) {
+                if (String.Equals(s, "randomsamus", StringComparison.OrdinalIgnoreCase)) {
+                    spriteGame = GameName.Metroid;
+                    (spriteAuthor, spriteData) = GetRandomSamusSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
+                    if (onlineSprite.IsMatch(spriteData)) {
+                        spriteData = ConvertSprite("sm", spriteData, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
+                    }
+                } else if (String.Equals(s, "randomlink", StringComparison.OrdinalIgnoreCase)) {
+                    spriteGame = GameName.Zelda;
+                    (spriteAuthor, spriteData) = GetRandomLinkSprite(opts["SpriteCachePath"], inventory, opts["AvoidSprites"]);
+                    if (onlineSprite.IsMatch(spriteData)) {
+                        spriteData = ConvertSprite("z3", spriteData, opts["SpriteCachePath"], opts["SpriteSomethingBin"], opts["PythonBin"]);
+                    }
+                } else if (File.Exists(s) && Regex.IsMatch(s, separator + @"sm|z3" + separator, RegexOptions.IgnoreCase)) {
                     spriteGame = is_zelda.IsMatch(s) ? GameName.Zelda : GameName.Metroid;
                     spriteData = s;
                 } else if (inventory.m3.approved.Where(x => x.Value.usage.Contains("smz3") && x.Key.Contains(s)).Count() > 0) {

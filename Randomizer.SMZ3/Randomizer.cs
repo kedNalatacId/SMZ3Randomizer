@@ -7,9 +7,7 @@ using static Randomizer.Shared.Contracts.RandomizerOptionType;
 using Newtonsoft.Json;
 
 namespace Randomizer.SMZ3 {
-
     public class Randomizer : IRandomizer {
-
         public static readonly Version version = new Version(11, 3);
         public Random randoRnd { get; set; } = new Random();
 

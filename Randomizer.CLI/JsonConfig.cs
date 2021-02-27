@@ -10,6 +10,7 @@ namespace Randomizer.CLI {
         public string smFile { get; set; }
         public string SMLogic { get; set; }
         public string MorphLocation { get; set; }
+        public string SMControls { get; set; }
     }
 
     public class Z3Config {
@@ -67,6 +68,7 @@ namespace Randomizer.CLI {
                 } catch (Exception e) {
                     Console.WriteLine("Improper JSON config:");
                     Console.WriteLine(JsonConvert.SerializeObject(e, Formatting.Indented));
+                    Environment.Exit(0);
                 }
             }
 

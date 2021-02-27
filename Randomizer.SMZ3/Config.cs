@@ -147,6 +147,7 @@ namespace Randomizer.SMZ3 {
         public int Seed { get; set; }
         public GameMode GameMode { get; set; } = GameMode.Normal;
         public string PlayerName { get; set; } = "Player";
+        public string SMControls { get; set; } = "";
         public Z3Logic Z3Logic { get; set; } = Z3Logic.Normal;
         public SMLogic SMLogic { get; set; } = SMLogic.Normal;
         public SwordLocation SwordLocation { get; set; } = SwordLocation.Randomized;
@@ -174,6 +175,7 @@ namespace Randomizer.SMZ3 {
             GameMode        = ParseOption(options, GameMode.Normal);
             MysterySeed     = ParseOption(options, "MysterySeed", false);
             PlayerName      = options.ContainsKey("playername") ? options["playername"] : "Player";
+            SMControls      = options.ContainsKey("smcontrols") ? options["smcontrols"] : "";
             Race            = ParseOption(options, "Race", false);
 
             if (MysterySeed) {
