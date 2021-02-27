@@ -263,7 +263,7 @@ Currently inside the generic JSON block.
 
 - Sprites
     - Optional
-    - List of Sprites to apply
+    - List of Sprites to apply (full path) or list of search terms to match (unique string)
     - Ignored if "SurpriseMe" mode is set
 
 The below options are used with SurpriseMe.

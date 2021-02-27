@@ -56,7 +56,7 @@ These are presented in no particular order.
         - etc
     - likely to be removed or changed when zelda logic comes in
 - "Hard" Zelda logic
-    - more or less unimpleneted; likely to be removed
+    - more or less unimpleneted; needs work
 - MysterySeed mode
     - randomizes difficulty of logic
     - randomizes morph and sword location (original, early, or random)
@@ -90,7 +90,7 @@ These are presented in no particular order.
     - removes forced skull wood small key in pinball room
     - removes forced super missile / power bomb drops in sphere zero
 - randomized number of flying tiles is available
-    - anywhere between 1 and 22
+    - anywhere between 1 and 21
 - KeyShuffle changes
     - new keyshuffle modes
         - WithinWorld (keys only spawn within Zelda)
@@ -117,9 +117,8 @@ These are presented in no particular order.
                 - "anywhere" (anywhere)
     - mystery mode chooses randomized about half of the time
         - WIP: "None" will be an option for randomized mode at some point
-- progressive bow is... sort of working
-    - when progressive bow is chosen, it'll only show up in zelda
-    - WIP; will work on getting it working in SM soon... i hope?
+- progressive bow is here
+    - and working
 - Add AutoIPS mode, which is necessary for mystery mode
     - compiles the IPS on the fly
     - WIP: doesn't currently work with --loop
@@ -127,10 +126,12 @@ These are presented in no particular order.
         - the location of alttp_sm_combo_randomizer_rom as checked out
     - recommend using alttp_sm_combo_randomizer_rom repo with build.py functionality
     - can set AutoIPSConfig to tell the IPS generator which config file to use
+        - required if AsarBin option is not set
 - Changed --loop to take an integer argument
     - zero or negative is "infinite"
 - Can now use a JSON file for configuration, makes creating seeds easier/faster
-    - see example.json for a list of available options
+    - see json_config_options.md for a list of available options
+    - you can begin by copying and editing sample_config.json
 - Surprise Me mode
     - chooses random sprites
     - sends --surpriseme when using --autoips
@@ -142,7 +143,7 @@ These are presented in no particular order.
     - shows all items in the randomizer (progression or not)
         - useful for debugging
 - Added some argument validation
-    - Choosing IPS or RDC files that don't exist will throw errors
+    - Setting too few or too many players will fail
     - Trying to run without either IPS or AutoIPS will fail
     - etc
 - Changed option "Console" to "ToConsole" that allows "-t" or "--terminal" as shortcuts
@@ -154,6 +155,7 @@ These are presented in no particular order.
     - rather than forcing local dir
 - some items moved out of progression
     - shields, half magic, bugnet, and spazer
+        - shields are still in progression for "normal" Zelda difficulty (because laser bridge)
     - may need revisiting, but generally "progression" items should open up new locations
     - anything that doesn't open up a new location has been removed from progression
 - changed out two reserve tanks for two e-tanks in progression items
@@ -161,7 +163,7 @@ These are presented in no particular order.
 - removed all but one missile, super, and two power bombs from progression
 - removed G4 requirement from opening Ganon's Tower
     - this means some Metroid bosses might be behind Agahnim 3
-    - but Agahnim 3 is (currently) required anyway
+    - but Agahnim 3 is still (currently) required
 - Added PlayerName option which gets used by the Zelda File Select screen
     - WIP: currently only first 4 characters
 - Added custom "CannotFillWorldException" that gets thrown when the world cannot be filled
@@ -193,8 +195,9 @@ Further changes that have been added:
 - Sprites are downloaded and applied "just in time"
     - SpriteSomething is used to convert .jpg and .zspr files to .rdc's and cached
     - the cached files are then applied
-    - future work (TODO): allowing specifying a sprite by name and it will get pulled from
-        online, converted, cached, and then applied
-    - sprite authors are injected into the credits when using "SurpriseMe"
+    - sprites can now be specified via regex string
+        - WIP: need to implement a uniqueness check and other validations
+        - found sprites will only be injected if approved for SMZ3; otherwise ignored
+    - sprite authors are injected into the credits
     - sprites in "SurpriseMe" mode are only allowed to be "approved for SMZ3" sprites
         - Please don't use sprites without the author's permission
