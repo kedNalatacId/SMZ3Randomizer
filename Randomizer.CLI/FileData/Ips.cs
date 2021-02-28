@@ -24,7 +24,7 @@ namespace Randomizer.CLI.FileData {
             string ips_opts = $"build.py --output {ips_file}";
             if (!String.IsNullOrEmpty(opts.AutoIPSConfig) && File.Exists(opts.AutoIPSConfig))
                 ips_opts += $" --config {opts.AutoIPSConfig}";
-            if (!String.IsNullOrEmpty(opts.AsarBin) && File.Exists(opts.AsarBin))
+            if (!String.IsNullOrEmpty(opts.AsarBin))
                 ips_opts += $" --asar {opts.AsarBin}";
             if ((bool)opts.SurpriseMe)
                 ips_opts += " --surprise_me";

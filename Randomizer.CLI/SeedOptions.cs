@@ -12,7 +12,7 @@ namespace Randomizer.CLI.Verbs {
         public Dictionary<string, object> defaults { get; set; } = new Dictionary<string, object>() {
             { "ConfigFile", @".\seed_options.json" },
 
-            { "AsarBin", "asar" },
+            { "AsarBin", "" },
             { "AutoIPS", false },
             { "AutoIPSConfig", "" },
             { "AutoIPSPath", "/tmp" },
@@ -346,13 +346,26 @@ namespace Randomizer.CLI.Verbs {
             return optionList;
         }
 
-        public static bool BinaryExistsInPath(string binary) {
+        public static bool BinaryExistsInPath(string binary, string[] extra = null) {
             if (File.Exists(binary))
                 return true;
+
+            if (extra != null) {
+                foreach (var path in extra) {
+                    if (File.Exists(Path.Combine(path, binary)))
+                        return true;
+                    // stupid windows (auto-adds .exe)
+                    if (File.Exists(String.Join('.', Path.Combine(path, binary), "exe")))
+                        return true;
+                }
+            }
 
             var paths = Environment.GetEnvironmentVariable("PATH");
             foreach (var path in paths.Split(Path.PathSeparator)) {
                 if (File.Exists(Path.Combine(path, binary)))
+                    return true;
+                // stupid windows (auto-adds .exe)
+                if (File.Exists(String.Join('.', Path.Combine(path, binary), "exe")))
                     return true;
             }
 
@@ -385,9 +398,9 @@ namespace Randomizer.CLI.Verbs {
     
             // Utilities needed for either AutoIPS or SurpriseMe mode
             if (options.AutoIPS == true || options.SurpriseMe == true) {
-                if (!BinaryExistsInPath(options.AsarBin))
+                if (!String.IsNullOrEmpty(options.AsarBin) && !BinaryExistsInPath(options.AsarBin, new string[] { options.AutoIPSPath }))
                     throw new FileNotFoundException($"Could not find AsarBin: ${options.AsarBin}");
-                if (!BinaryExistsInPath(options.PythonBin))
+                if (!String.IsNullOrEmpty(options.PythonBin) && !BinaryExistsInPath(options.PythonBin))
                     throw new FileNotFoundException($"Could not find PythonBin: ${options.PythonBin}");
             }
 
