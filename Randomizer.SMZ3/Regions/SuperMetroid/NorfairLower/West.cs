@@ -50,12 +50,12 @@ namespace Randomizer.SMZ3.Regions.SuperMetroid.NorfairLower {
                         (items.CanUsePowerBombs() && items.CanFly() && (items.Super || items.Charge)),
                     _ => new Requirement(items => 
                         items.Morph && items.Varia && items.Super && (
-                            items.CanFly() || items.CanSpringBallJump() || items.SpeedBooster && (items.HiJump && items.CanUsePowerBombs() || items.Charge && items.Ice)
+                            (items.CanFly() || items.CanSpringBallJump() || items.SpeedBooster && (items.HiJump && items.CanUsePowerBombs() || items.Charge && items.Ice)
                         ) &&
                         /*Exit to Upper Norfair*/
                         (items.CardNorfairL2 || (items.SpeedBooster || items.CanFly() || items.Grapple || items.HiJump && (items.CanSpringBallJump() || items.Ice))) ||
                         /*Return to Portal*/
-                        items.CanUsePowerBombs())
+                        items.CanUsePowerBombs()))
                 }),
             };
         }
