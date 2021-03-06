@@ -142,13 +142,9 @@ namespace Randomizer.SMZ3.Regions.Zelda {
         }
 
         public override bool CanEnter(Progression items) {
-            if (Config.GameMode == GameMode.Multiworld) {
-                return items.MoonPearl && World.CanEnter("Dark World Death Mountain East", items) &&
-                    World.CanAquireAll(items, new[] { CrystalBlue, CrystalRed, GoldenFourBoss });
-            } else {
-                return items.MoonPearl && World.CanEnter("Dark World Death Mountain East", items) &&
-                    World.CanAquireAll(items, new[] { CrystalBlue, CrystalRed });
-            }
+            return items.MoonPearl &&
+                World.CanEnter("Dark World Death Mountain East", items) &&
+                items.CanAcquireCrystals(World);
         }
 
         public override bool CanFill(Item item, Progression items) {

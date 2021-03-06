@@ -162,6 +162,8 @@ namespace Randomizer.SMZ3 {
         public bool ProgressiveBow { get; set; } = false;
         public bool Race { get; set; } = false;
         public BossDrops BossDrops { get; set; } = BossDrops.Randomized;
+        public int TowerCrystals { get; set; } = 7;
+        public int GanonCrystals { get; set; } = 7;
         public GanonInvincible GanonInvincible { get; set; } = GanonInvincible.BeforeCrystals;
         public BottleContents BottleContents { get; set; } = BottleContents.Empty;
         public bool LiveDangerously { get; set; } = false;
@@ -179,16 +181,28 @@ namespace Randomizer.SMZ3 {
             Race            = ParseOption(options, "Race", false);
 
             if (MysterySeed) {
-                BossDrops       = Rnd.Next(100) < 80 ? BossDrops.Randomized : BossDrops.NonDungeon;
-                BottleContents  = Rnd.Next(100) < 80 ? BottleContents.Randomized : BottleContents.Empty;
-                GanonInvincible = ParseOption(options, GanonInvincible.BeforeCrystals);
-                Goal            = ParseOption(options, Goal.DefeatBoth);
-                GoFast          = Rnd.Next(100) < 10 ? true : false;
-                LiveDangerously = Rnd.Next(100) < 70 ? true : false;
-                ProgressiveBow  = Rnd.Next(100) < 60 ? true : false;
-                KeyShuffle      = KeyShuffle.Mystery;
-                Keycards        = Keycards.Mystery;
+                BossDrops         = Rnd.Next(100) < 80 ? BossDrops.Randomized : BossDrops.NonDungeon;
+                BottleContents    = Rnd.Next(100) < 80 ? BottleContents.Randomized : BottleContents.Empty;
+                Goal              = ParseOption(options, Goal.DefeatBoth);
+                GoFast            = Rnd.Next(100) < 10 ? true : false;
+                LiveDangerously   = Rnd.Next(100) < 70 ? true : false;
+                ProgressiveBow    = Rnd.Next(100) < 60 ? true : false;
+                KeyShuffle        = KeyShuffle.Mystery;
+                Keycards          = Keycards.Mystery;
                 RandomFlyingTiles = Rnd.Next(100) < 80 ? true : false;
+
+                TowerCrystals     = Rnd.Next(100) < 30 ? Rnd.Next(3, 7) : 7;
+                if (TowerCrystals < 7) {
+                    GanonCrystals = Rnd.Next(TowerCrystals, 7);
+                    // done this way because "Never" or "Always" may be options in the future
+                    GanonInvincible = Rnd.Next(100) switch {
+                        var n when n < 20 => GanonInvincible.BeforeAllDungeons,
+                        _ => GanonInvincible.BeforeCrystals,
+                    };
+                } else {
+                    GanonCrystals = 7;
+                    GanonInvincible = GanonInvincible.BeforeCrystals;
+                }
 
                 MorphLocation = Rnd.Next(100) switch {
                     var n when n < 5  => MorphLocation.Original,
@@ -214,18 +228,20 @@ namespace Randomizer.SMZ3 {
                     _ => Z3Logic.Medium
                 };
             } else {
-                BossDrops       = ParseOption(options, BossDrops.Randomized);
-                BottleContents  = ParseOption(options, BottleContents.Empty);
-                GanonInvincible = ParseOption(options, GanonInvincible.BeforeCrystals);
-                Goal            = ParseOption(options, Goal.DefeatBoth);
-                GoFast          = ParseOption(options, "GoFast", false);
-                LiveDangerously = ParseOption(options, "LiveDangerously", false);
+                BossDrops         = ParseOption(options, BossDrops.Randomized);
+                BottleContents    = ParseOption(options, BottleContents.Empty);
+                Goal              = ParseOption(options, Goal.DefeatBoth);
+                GoFast            = ParseOption(options, "GoFast", false);
+                LiveDangerously   = ParseOption(options, "LiveDangerously", false);
                 RandomFlyingTiles = ParseOption(options, "RandomFlyingTiles", false);
-                ProgressiveBow  = ParseOption(options, "ProgressiveBow", false);
-                MorphLocation   = ParseOption(options, MorphLocation.Randomized);
-                SMLogic         = ParseOption(options, SMLogic.Normal);
-                SwordLocation   = ParseOption(options, SwordLocation.Randomized);
-                Z3Logic         = ParseOption(options, Z3Logic.Normal);
+                ProgressiveBow    = ParseOption(options, "ProgressiveBow", false);
+                MorphLocation     = ParseOption(options, MorphLocation.Randomized);
+                SMLogic           = ParseOption(options, SMLogic.Normal);
+                SwordLocation     = ParseOption(options, SwordLocation.Randomized);
+                Z3Logic           = ParseOption(options, Z3Logic.Normal);
+                TowerCrystals     = ParseOption(options, "TowerCrystals", 7);
+                GanonCrystals     = ParseOption(options, "GanonCrystals", 7);
+                GanonInvincible   = ParseOption(options, GanonInvincible.BeforeCrystals);
 
                 // Have to be parsed in order (dependency)
                 KeyShuffle      = ParseOption(options, KeyShuffle.None);
@@ -280,9 +296,9 @@ namespace Randomizer.SMZ3 {
             return defaultValue;
         }
 
-        private bool ParseOption(IDictionary<string, string> options, string option, bool defaultValue) {
-            if(options.ContainsKey(option.ToLower())) {
-                return bool.Parse(options[option.ToLower()]);
+        private T ParseOption<T>(IDictionary<string, string> options, string option, T defaultValue) {
+            if (options.ContainsKey(option.ToLower())) {
+                return (T) Convert.ChangeType(options[option.ToLower()], typeof(T));
             } else {
                 return defaultValue;
             }

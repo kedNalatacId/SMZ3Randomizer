@@ -26,6 +26,8 @@ namespace Randomizer.CLI.Verbs {
             defaults.Add("BossDrops", "Randomized");
             defaults.Add("BottleContents", "Empty");
             defaults.Add("ProgressiveBow", false);
+            defaults.Add("TowerCrystals", 7);
+            defaults.Add("GanonCrystals", 7);
             defaults.Add("GanonInvincible", "Never");
             defaults.Add("Goal", "DefeatBoth");
             defaults.Add("KeyShuffle", "None");

@@ -17,6 +17,8 @@ namespace Randomizer.CLI {
         public string BossDrops { get; set; }
         public string BottleContents { get; set; }
         public bool? ProgressiveBow { get; set; }
+        public int? TowerCrystals { get; set; }
+        public int? GanonCrystals { get; set; }
         public string GanonInvincible { get; set; }
         public string KeyShuffle { get; set; }
         public bool? RandomFlyingTiles { get; set; }

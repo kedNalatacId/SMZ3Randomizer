@@ -94,6 +94,7 @@ namespace Randomizer.SMZ3 {
 
             WriteRemoveEquipmentFromUncle(myWorld.Locations.Get("Link's Uncle").Item);
 
+            WriteCrystalsNeeded(config.TowerCrystals, config.GanonCrystals);
             WriteGanonInvicible(config.GanonInvincible);
             WriteRngBlock();
 
@@ -917,6 +918,11 @@ namespace Randomizer.SMZ3 {
                     (Snes(0xDD313), new byte[] { 0x00, 0x00, 0xE4, 0xFF, 0x08, 0x0E }),
                 });
             }
+        }
+
+        void WriteCrystalsNeeded(int tower, int ganon) {
+            patches.Add(( Snes(0x30805E), UintBytes(tower) ));
+            patches.Add(( Snes(0x30805F), UintBytes(ganon) ));
         }
 
         void WriteGanonInvicible(GanonInvincible invincible) {

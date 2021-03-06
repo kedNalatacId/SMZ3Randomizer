@@ -65,7 +65,9 @@ namespace Randomizer.SMZ3 {
                 });
             }
 
-            GanonTowerFill(junkItems, 2);
+            if (Config.GameMode == GameMode.Multiworld || !Config.LiveDangerously)
+                GanonTowerFill(junkItems, 2);
+
             AssumedFill(progressionItems, baseItems, locations, Worlds);
             FastFill(niceItems.ToList(), locations);
             FastFill(junkItems, locations);

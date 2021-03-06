@@ -138,6 +138,8 @@ namespace Randomizer.SMZ3 {
             {"Z3Logic", Config.Z3Logic.ToString()},
             {"SMLogic", Config.SMLogic.ToString()},
             {"BottleContents", Config.BottleContents.ToString()},
+            {"TowerCrystals", Config.TowerCrystals.ToString()},
+            {"GanonCrystals", Config.GanonCrystals.ToString()},
             {"SwordLocation", Config.SwordLocation.ToString()},
             {"MorphLocation", Config.MorphLocation.ToString()},
             {"Goal", Config.Goal.ToString()},

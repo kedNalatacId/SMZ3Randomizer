@@ -187,7 +187,7 @@ namespace Randomizer.CLI.Verbs {
                 throw new ArgumentException("You haven't specified a 'Metroid' configuration section. Please reference the sample_conifg.json");
             if (conf.Zelda == null)
                 throw new ArgumentException("You haven't specified a 'Zelda' configuration section. Please reference the sample_config.json");
-    
+
             // Coalesce options into opts while we're here; this is technically a side-effect
             opts.Multi ??= conf.Multi ?? (bool)opts.defaults["Multi"];
             opts.SurpriseMe ??= conf.SurpriseMe ?? (bool)opts.defaults["SurpriseMe"];
@@ -201,59 +201,59 @@ namespace Randomizer.CLI.Verbs {
             opts.Spoiler ??= conf.Spoiler ?? (bool)opts.defaults["Spoiler"];
             opts.Patch ??= conf.Patch ?? (bool)opts.defaults["Patch"];
             opts.GoFast ??= conf.GoFast ?? (bool)opts.defaults["GoFast"];
-    
+
             if (String.IsNullOrEmpty(opts.SMLogic))
                 opts.SMLogic = !String.IsNullOrEmpty(conf.Metroid.SMLogic) ? conf.Metroid.SMLogic : (string)opts.defaults["SMLogic"];
 
             if (String.IsNullOrEmpty(opts.SMControls))
                 opts.SMControls = !String.IsNullOrEmpty(conf.Metroid.SMControls) ? conf.Metroid.SMControls : (string)opts.defaults["SMControls"];
-    
+
             if (opts.Players == 0)
                 opts.Players = conf.Players > 0 ? conf.Players : (int)opts.defaults["Players"];
-    
+
             if (opts.Verbose == 0)
                 opts.Verbose = conf.Verbose > 0 ? conf.Verbose : (int)opts.defaults["Verbose"];
-    
+
             if (String.IsNullOrEmpty(opts.PlayerName))
                 opts.PlayerName = !String.IsNullOrEmpty(conf.PlayerName) ? conf.PlayerName : (string)opts.defaults["PlayerName"];
-    
+
             if (String.IsNullOrEmpty(opts.AsarBin))
                 opts.AsarBin = !String.IsNullOrEmpty(conf.AsarBin) ? conf.AsarBin : (string)opts.defaults["AsarBin"];
-    
+
             if (String.IsNullOrEmpty(opts.AutoIPSConfig))
                 opts.AutoIPSConfig = !String.IsNullOrEmpty(conf.AutoIPSConfig) ? conf.AutoIPSConfig : (string)opts.defaults["AutoIPSConfig"];
-    
+
             if (String.IsNullOrEmpty(opts.AutoIPSPath))
                 opts.AutoIPSPath = !String.IsNullOrEmpty(conf.AutoIPSPath) ? conf.AutoIPSPath : (string)opts.defaults["AutoIPSPath"];
-    
+
             if (String.IsNullOrEmpty(opts.SpriteURL))
                 opts.SpriteURL = !String.IsNullOrEmpty(conf.SpriteURL) ? conf.SpriteURL : (string)opts.defaults["SpriteURL"];
-    
+
             if (String.IsNullOrEmpty(opts.SpriteCachePath))
                 opts.SpriteCachePath = !String.IsNullOrEmpty(conf.SpriteCachePath) ? conf.SpriteCachePath : (string)opts.defaults["SpriteCachePath"];
-    
+
             if (String.IsNullOrEmpty(opts.SpriteSomethingBin))
                 opts.SpriteSomethingBin = !String.IsNullOrEmpty(conf.SpriteSomethingBin) ? conf.SpriteSomethingBin : (string)opts.defaults["SpriteSomethingBin"];
-    
+
             if (String.IsNullOrEmpty(opts.OutputFile))
                 opts.OutputFile = !String.IsNullOrEmpty(conf.OutputFile) ? conf.OutputFile : (string)opts.defaults["OutputFile"];
-    
+
             if (String.IsNullOrEmpty(opts.PythonBin))
                 opts.PythonBin = !String.IsNullOrEmpty(conf.PythonBin) ? conf.PythonBin : (string)opts.defaults["PythonBin"];
-    
+
             if (String.IsNullOrEmpty(opts.smFile))
                 opts.smFile = !String.IsNullOrEmpty(conf.Metroid.smFile) ? conf.Metroid.smFile : (string)opts.defaults["smFile"];
-    
+
             if (String.IsNullOrEmpty(opts.z3File))
                 opts.z3File = !String.IsNullOrEmpty(conf.Zelda.z3File) ? conf.Zelda.z3File : (string)opts.defaults["z3File"];
-    
+
             if (opts.Sprites.Count() == 0)
                 opts.Sprites = conf.Sprites != null && conf.Sprites.Length > 0 ? conf.Sprites.ToList() : (List<string>)opts.defaults["Sprites"];
             if (opts.AvoidSprites.Count() == 0)
                 opts.AvoidSprites = conf.AvoidSprites != null && conf.AvoidSprites.Length > 0 ? conf.AvoidSprites.ToList() : (List<string>)opts.defaults["AvoidSprites"];
             if (opts.Ips.Count() == 0)
                 opts.Ips = conf.Ips != null && conf.Ips.Length > 0 ? conf.Ips.ToList() : (List<string>)opts.defaults["Ips"];
-    
+
             var optionList = new List<(string, string)> {
                 ("gamemode", (bool)opts.Multi ? "multiworld" : "single"),
                 ("gofast", opts.GoFast.ToString()),
@@ -265,7 +265,7 @@ namespace Randomizer.CLI.Verbs {
                 ("smlogic", opts.SMLogic),
                 ("smcontrols", opts.SMControls),
                 ("loop", opts.Loop.ToString()),
-    
+
                 // These options are passed this way when getting a random sprite (easier)
                 ("SpriteURL", opts.SpriteURL),
                 ("SpriteCachePath", opts.SpriteCachePath),
@@ -273,39 +273,42 @@ namespace Randomizer.CLI.Verbs {
                 ("AvoidSprites", String.Join(',', opts.AvoidSprites)),
                 ("PythonBin", opts.PythonBin),
             };
-    
+
             if (opts is SMZ3SeedOptions smz3) {
                 if (String.IsNullOrEmpty(smz3.Z3Logic))
                     smz3.Z3Logic = !String.IsNullOrEmpty(conf.Zelda.Z3Logic) ? conf.Zelda.Z3Logic : (string)smz3.defaults["Z3Logic"];
-    
+
                 if (String.IsNullOrEmpty(smz3.BottleContents))
                     smz3.BottleContents = !String.IsNullOrEmpty(conf.Zelda.BottleContents) ? conf.Zelda.BottleContents : (string)smz3.defaults["BottleContents"];
-    
+
+
                 if (String.IsNullOrEmpty(smz3.SwordLocation))
                     smz3.SwordLocation = !String.IsNullOrEmpty(conf.Zelda.SwordLocation) ? conf.Zelda.SwordLocation : (string)smz3.defaults["SwordLocation"];
-    
+
                 if (String.IsNullOrEmpty(smz3.MorphLocation))
                     smz3.MorphLocation = !String.IsNullOrEmpty(conf.Metroid.MorphLocation) ? conf.Metroid.MorphLocation : (string)smz3.defaults["MorphLocation"];
-    
+
                 if (String.IsNullOrEmpty(smz3.KeyShuffle))
                     smz3.KeyShuffle = !String.IsNullOrEmpty(conf.Zelda.KeyShuffle) ? conf.Zelda.KeyShuffle : (string)smz3.defaults["KeyShuffle"];
-    
+
                 if (String.IsNullOrEmpty(smz3.Keycards))
                     smz3.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)smz3.defaults["Keycards"];
-    
+
                 if (String.IsNullOrEmpty(smz3.BossDrops))
                     smz3.BossDrops = !String.IsNullOrEmpty(conf.Zelda.BossDrops) ? conf.Zelda.BossDrops : (string)smz3.defaults["BossDrops"];
-    
+
                 if (String.IsNullOrEmpty(smz3.GanonInvincible))
                     smz3.GanonInvincible = !String.IsNullOrEmpty(conf.Zelda.GanonInvincible) ? conf.Zelda.GanonInvincible : (string)smz3.defaults["GanonInvincible"];
-    
+
                 if (String.IsNullOrEmpty(smz3.Goal))
                     smz3.Goal = !String.IsNullOrEmpty(conf.Goal) ? conf.Goal : (string)smz3.defaults["Goal"];
-    
+
+                smz3.TowerCrystals ??= conf.Zelda.TowerCrystals ?? (int)smz3.defaults["TowerCrystals"];
+                smz3.GanonCrystals ??= conf.Zelda.GanonCrystals ?? (int)smz3.defaults["GanonCrystals"];
                 smz3.ProgressiveBow ??= conf.Zelda.ProgressiveBow ?? (bool)smz3.defaults["ProgressiveBow"];
                 smz3.LiveDangerously ??= conf.LiveDangerously ?? (bool)smz3.defaults["LiveDangerously"];
                 smz3.RandomFlyingTiles ??= conf.Zelda.RandomFlyingTiles ?? (bool)smz3.defaults["RandomFlyingTiles"];
-    
+
                 optionList.AddRange(new[] {
                     ("z3logic", smz3.Z3Logic),
                     ("bottlecontents", smz3.BottleContents),
@@ -314,6 +317,8 @@ namespace Randomizer.CLI.Verbs {
                     ("keyshuffle", smz3.KeyShuffle),
                     ("keycards", smz3.Keycards),
                     ("bossdrops", smz3.BossDrops),
+                    ("towercrystals", smz3.TowerCrystals.ToString()),
+                    ("ganoncrystals", smz3.GanonCrystals.ToString()),
                     ("ganoninvincible", smz3.GanonInvincible),
                     ("goal", smz3.Goal),
                     ("progressivebow", smz3.ProgressiveBow.ToString()),
@@ -321,20 +326,20 @@ namespace Randomizer.CLI.Verbs {
                     ("randomflyingtiles", smz3.RandomFlyingTiles.ToString()),
                 });
             }
-    
+
             if (opts is SMSeedOptions sm) {
                 if (String.IsNullOrEmpty(sm.Placement))
                     sm.Placement = !String.IsNullOrEmpty(conf.Metroid.Placement) ? conf.Metroid.Placement : (string)sm.defaults["Placement"];
-    
+
                 if (String.IsNullOrEmpty(sm.Goal))
                     sm.Goal = !String.IsNullOrEmpty(conf.Goal) ? conf.Goal : (string)sm.defaults["Goal"];
-    
+
                 if (String.IsNullOrEmpty(sm.MorphLocation))
                     sm.MorphLocation = !String.IsNullOrEmpty(conf.Metroid.MorphLocation) ? conf.Metroid.MorphLocation : (string)sm.defaults["MorphLocation"];
-    
+
                 if (String.IsNullOrEmpty(sm.Keycards))
                     sm.Keycards = !String.IsNullOrEmpty(conf.Metroid.Keycards) ? conf.Metroid.Keycards : (string)sm.defaults["Keycards"];
-    
+
                 optionList.AddRange(new[] {
                     ("placement", sm.Placement),
                     ("goal", sm.Goal),
@@ -342,7 +347,7 @@ namespace Randomizer.CLI.Verbs {
                     ("keycards", sm.Keycards),
                 });
             }
-    
+
             return optionList;
         }
 
@@ -375,13 +380,13 @@ namespace Randomizer.CLI.Verbs {
         public static void validateOptions(GenSeedOptions options) {
             if (options.Players < 1 || options.Players > 64)
                 throw new ArgumentOutOfRangeException("players", "The players parameter must fall within the range 1-64");
-    
+
             if (options.AutoIPS == true) {
                 if (String.IsNullOrEmpty(options.AutoIPSPath))
                     throw new ArgumentException("--autoipspath must be set when using --autoips");
                 if (!Directory.Exists(options.AutoIPSPath))
                     throw new DirectoryNotFoundException($"Could not find --autoipspath {options.AutoIPSPath}");
-    
+
                 if (!String.IsNullOrEmpty(options.AutoIPSConfig) && !File.Exists(options.AutoIPSConfig))
                     throw new FileNotFoundException($"AutoIPSConfig specified but doesn't exist: {options.AutoIPSConfig}");
 
@@ -395,7 +400,7 @@ namespace Randomizer.CLI.Verbs {
                 if (options.Ips.Count() == 0)
                     throw new ArgumentException("Must either set --ips <file> or --autoips");
             }
-    
+
             // Utilities needed for either AutoIPS or SurpriseMe mode
             if (options.AutoIPS == true || options.SurpriseMe == true) {
                 if (!String.IsNullOrEmpty(options.AsarBin) && !BinaryExistsInPath(options.AsarBin, new string[] { options.AutoIPSPath }))
@@ -424,13 +429,13 @@ namespace Randomizer.CLI.Verbs {
                 if (!File.Exists(i))
                     throw new FileNotFoundException($"IPS File {i} doesn't exist.");
             }
-    
+
             if ((bool)options.Playthrough && (bool)options.Spoiler)
                 throw new ArgumentException("Playthrough and Spoiler are mutually exclusive.");
-    
+
             if (String.IsNullOrEmpty(options.smFile) || !File.Exists(options.smFile))
                 throw new FileNotFoundException($"Could not find Super Metroid file: {options.smFile}");
-    
+
             if (String.IsNullOrEmpty(options.z3File) || !File.Exists(options.z3File))
                 throw new FileNotFoundException($"Could not find Zelda file: {options.z3File}");
 
@@ -438,6 +443,13 @@ namespace Randomizer.CLI.Verbs {
                 var basePath = Path.GetDirectoryName(options.OutputFile);
                 if (!Directory.Exists(basePath))
                     throw new DirectoryNotFoundException($"Directory for output file does not exist: {basePath}");
+            }
+
+            if (options is SMZ3SeedOptions smz3) {
+                if (smz3.TowerCrystals < 1 || smz3.TowerCrystals> 7)
+                    throw new ArgumentOutOfRangeException("TowerCrystals", "The number of crystals to open GT must be between 1-7");
+                if (smz3.GanonCrystals < 1 || smz3.GanonCrystals> 7)
+                    throw new ArgumentOutOfRangeException("GanonCrystals", "The number of crystals to defeat Ganon must be between 1-7");
             }
         }
     }
@@ -470,6 +482,14 @@ namespace Randomizer.CLI.Verbs {
         [Option("bottle",
             HelpText = "How to fill bottles (defaeult is Empty)")]
         public string BottleContents { get; set; }
+
+        [Option("towercrystals",
+            HelpText = "How many crystals required to open Ganon's Tower")]
+        public int? TowerCrystals { get; set; }
+
+        [Option("ganoncrystals",
+            HelpText = "How many crystals required to defeat Ganon")]
+        public int? GanonCrystals { get; set; }
 
         [Option("sword",
             HelpText = "Zelda Sword Location (default is Randomized)")]
